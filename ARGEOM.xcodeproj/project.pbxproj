@@ -19,6 +19,9 @@
 		C98CDF95164D697A00395BC4 /* MainStoryboard_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C98CDF93164D697A00395BC4 /* MainStoryboard_iPhone.storyboard */; };
 		C98CDF98164D697A00395BC4 /* MainStoryboard_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C98CDF96164D697A00395BC4 /* MainStoryboard_iPad.storyboard */; };
 		C98CDF9B164D697A00395BC4 /* DCViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C98CDF9A164D697A00395BC4 /* DCViewController.m */; };
+		C98CDFA6164D6DA800395BC4 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C98CDFA5164D6DA800395BC4 /* CoreLocation.framework */; };
+		C98CDFA8164D6DB200395BC4 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C98CDFA7164D6DB200395BC4 /* MapKit.framework */; };
+		C98CDFB1164D710B00395BC4 /* DCAugmentedRealityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C98CDFB0164D710B00395BC4 /* DCAugmentedRealityViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +42,10 @@
 		C98CDF97164D697A00395BC4 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/MainStoryboard_iPad.storyboard; sourceTree = "<group>"; };
 		C98CDF99164D697A00395BC4 /* DCViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DCViewController.h; sourceTree = "<group>"; };
 		C98CDF9A164D697A00395BC4 /* DCViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DCViewController.m; sourceTree = "<group>"; };
+		C98CDFA5164D6DA800395BC4 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		C98CDFA7164D6DB200395BC4 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		C98CDFAF164D710B00395BC4 /* DCAugmentedRealityViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DCAugmentedRealityViewController.h; sourceTree = "<group>"; };
+		C98CDFB0164D710B00395BC4 /* DCAugmentedRealityViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DCAugmentedRealityViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,6 +53,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C98CDFA8164D6DB200395BC4 /* MapKit.framework in Frameworks */,
+				C98CDFA6164D6DA800395BC4 /* CoreLocation.framework in Frameworks */,
 				C98CDF7C164D697A00395BC4 /* UIKit.framework in Frameworks */,
 				C98CDF7E164D697A00395BC4 /* Foundation.framework in Frameworks */,
 				C98CDF80164D697A00395BC4 /* CoreGraphics.framework in Frameworks */,
@@ -75,6 +84,8 @@
 		C98CDF7A164D697A00395BC4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C98CDFA7164D6DB200395BC4 /* MapKit.framework */,
+				C98CDFA5164D6DA800395BC4 /* CoreLocation.framework */,
 				C98CDF7B164D697A00395BC4 /* UIKit.framework */,
 				C98CDF7D164D697A00395BC4 /* Foundation.framework */,
 				C98CDF7F164D697A00395BC4 /* CoreGraphics.framework */,
@@ -85,6 +96,7 @@
 		C98CDF81164D697A00395BC4 /* ARGEOM */ = {
 			isa = PBXGroup;
 			children = (
+				C98CDFAD164D705300395BC4 /* Augmented Reality */,
 				C98CDF8A164D697A00395BC4 /* DCAppDelegate.h */,
 				C98CDF8B164D697A00395BC4 /* DCAppDelegate.m */,
 				C98CDF93164D697A00395BC4 /* MainStoryboard_iPhone.storyboard */,
@@ -108,6 +120,15 @@
 				C98CDF91164D697A00395BC4 /* Default-568h@2x.png */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		C98CDFAD164D705300395BC4 /* Augmented Reality */ = {
+			isa = PBXGroup;
+			children = (
+				C98CDFAF164D710B00395BC4 /* DCAugmentedRealityViewController.h */,
+				C98CDFB0164D710B00395BC4 /* DCAugmentedRealityViewController.m */,
+			);
+			name = "Augmented Reality";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -181,6 +202,7 @@
 				C98CDF88164D697A00395BC4 /* main.m in Sources */,
 				C98CDF8C164D697A00395BC4 /* DCAppDelegate.m in Sources */,
 				C98CDF9B164D697A00395BC4 /* DCViewController.m in Sources */,
+				C98CDFB1164D710B00395BC4 /* DCAugmentedRealityViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -307,6 +329,7 @@
 				C98CDFA0164D697A00395BC4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

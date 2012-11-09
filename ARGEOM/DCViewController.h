@@ -8,6 +8,10 @@
 
 #import <UIKit/UIKit.h>
 
+@class DCAugmentedRealityViewController;
+
 @interface DCViewController : UIViewController
+
+@property (nonatomic, strong) IBOutlet DCAugmentedRealityViewController *arController;
 
 @end
