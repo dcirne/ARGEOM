@@ -7,8 +7,9 @@
 //
 
 #import "DCViewController.h"
+#import "DCAugmentedRealityViewController.h"
 
-@interface DCViewController()
+@interface DCViewController() <DCAugmentedRealityViewControllerDelegate>
 
 @end
 
@@ -16,10 +17,29 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    [self.arController addAnnotationsToMap];
+    [self.arController startMonitoringDeviceMotion];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
+}
+
+- (NSUInteger) supportedInterfaceOrientations {
+    return UIInterfaceOrientationMaskLandscape;
+}
+
+#pragma mark DCAugmentedRealityViewControllerDelegate methods
+- (void)presentAugmentedRealityController:(UIViewController *)viewController completion:(dispatch_block_t)completionBlock {
+    [self presentViewController:viewController
+                       animated:YES
+                     completion:completionBlock];
+}
+
+- (void)dismissAugmentedRealityControllerWithCompletionBlock:(dispatch_block_t)completionBlock {
+    [self dismissViewControllerAnimated:YES
+                             completion:completionBlock];
 }
 
 @end

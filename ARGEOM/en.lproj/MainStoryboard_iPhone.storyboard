@@ -31,7 +31,8 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="4" sceneMemberID="firstResponder"/>
                 <customObject id="tOs-nP-xqu" customClass="DCAugmentedRealityViewController">
                     <connections>
-                        <outlet property="mapView" destination="zHm-qV-fYd" id="8UR-nx-Bes"/>
+                        <outlet property="delegate" destination="2" id="o5F-E7-8Xw"/>
+                        <outlet property="stdMapView" destination="zHm-qV-fYd" id="y4M-7f-PPg"/>
                     </connections>
                 </customObject>
             </objects>
@@ -42,7 +43,8 @@
         <class className="DCAugmentedRealityViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/DCAugmentedRealityViewController.h"/>
             <relationships>
-                <relationship kind="outlet" name="mapView" candidateClass="MKMapView"/>
+                <relationship kind="outlet" name="delegate"/>
+                <relationship kind="outlet" name="stdMapView" candidateClass="MKMapView"/>
             </relationships>
         </class>
         <class className="DCViewController" superclassName="UIViewController">
