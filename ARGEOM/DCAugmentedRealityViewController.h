@@ -8,6 +8,26 @@
 
 #import <UIKit/UIKit.h>
 
+typedef enum : NSInteger {
+    VisualizationModeUnknown = -1,
+    VisualizationModeMap,
+    VisualizationModeAugmentedReality
+} VisualizationMode;
+
+@protocol DCAugmentedRealityViewControllerDelegate;
+
 @interface DCAugmentedRealityViewController : UIViewController
 
+@property (nonatomic, weak) id<DCAugmentedRealityViewControllerDelegate> delegate;
+@property (nonatomic, readonly, getter = visualizationMode) VisualizationMode visualizationMode;
+
+@end
+
+
+@protocol DCAugmentedRealityViewControllerDelegate <NSObject>
+- (void)presentAugmentedReality:(UIViewController *)augmentedRealityController;
+- (void)dismissAugmentedReality;
+
+@optional
+//- (CMMotionManager *)motionManager;
 @end
