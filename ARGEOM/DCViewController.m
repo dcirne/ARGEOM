@@ -8,6 +8,7 @@
 
 #import "DCViewController.h"
 #import "DCAugmentedRealityViewController.h"
+#import <dispatch/dispatch.h>
 
 @interface DCViewController() <DCAugmentedRealityViewControllerDelegate>
 
@@ -18,8 +19,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    [self.arController addAnnotationsToMap];
-    [self.arController startMonitoringDeviceMotion];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.arController start];
+    });
 }
 
 - (void)didReceiveMemoryWarning {

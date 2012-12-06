@@ -39,6 +39,8 @@
     CGPoint pointA, pointB, pointC, pointP;
     BOOL userLocationRegionSet;
     dispatch_queue_t pointsOfInterestQueue;
+    NSMutableArray *annotations;
+    BOOL initialized;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
@@ -60,6 +62,8 @@
     phi = M_PI / 3.0;
     radius = 50.0 * ONE_MILE_IN_METERS;
     userLocationRegionSet = NO;
+    annotations = nil;
+    initialized = NO;
 
     motionQueue = [[NSOperationQueue alloc] init];
     
@@ -165,21 +169,21 @@
     // Placemark 1
     placemark = [[DCPlacemark alloc] init];
     placemark.title = @"New York City";
-    placemark.subtitle = @"";
+    placemark.subtitle = @"The Big Apple";
     placemark.coordinate = CLLocationCoordinate2DMake(40.7833, -73.9667);
     [placemarks addObject:placemark];
     
     // Placemark 2
     placemark = [[DCPlacemark alloc] init];
     placemark.title = @"White Plains";
-    placemark.subtitle = @"";
+    placemark.subtitle = @"Large City in Westchester County";
     placemark.coordinate = CLLocationCoordinate2DMake(41.0667, -73.7);
     [placemarks addObject:placemark];
     
     // Placemark 3
     placemark = [[DCPlacemark alloc] init];
     placemark.title = @"Albany";
-    placemark.subtitle = @"";
+    placemark.subtitle = @"State Capital";
     placemark.coordinate = CLLocationCoordinate2DMake(42.75, -73.8);
     [placemarks addObject:placemark];
     
@@ -187,14 +191,14 @@
     placemark = [[DCPlacemark alloc] init];
     placemark.title = @"Point 4";
     placemark.subtitle = @"";
-    placemark.coordinate = CLLocationCoordinate2DMake(0, 0);
+    placemark.coordinate = CLLocationCoordinate2DMake(44, -72);
     [placemarks addObject:placemark];
     
     // Placemark 5
     placemark = [[DCPlacemark alloc] init];
     placemark.title = @"Point 5";
     placemark.subtitle = @"";
-    placemark.coordinate = CLLocationCoordinate2DMake(0, 0);
+    placemark.coordinate = CLLocationCoordinate2DMake(42, -74.5);
     [placemarks addObject:placemark];
     
     _placemarks = [placemarks copy];
@@ -204,8 +208,7 @@
 #pragma mark Private methods
 - (void)layoutScreen {
     switch (_visualizationMode) {
-        case VisualizationModeAugmentedReality:
-        {
+        case VisualizationModeAugmentedReality: {
             CGRect arMapFrame;
             CGRect statusBarFrame = [[UIApplication sharedApplication] statusBarFrame];
             CGRect arFrame = [[UIScreen mainScreen] applicationFrame];
@@ -243,19 +246,27 @@
     
 }
 
-#pragma mark Public methods
 - (void)addAnnotationsToMap {
-    NSInteger numberOfPlacemarks = self.placemarks.count;
-    NSMutableArray *mapAnnotations = [[NSMutableArray alloc] initWithCapacity:numberOfPlacemarks];
-    
-    id<MKAnnotation> annotation;
-    for (int i = 0; i < numberOfPlacemarks; i++) {
-        annotation = (id<MKAnnotation>)[self.placemarks objectAtIndex:i];
-        [mapAnnotations addObject:annotation];
+    if (annotations) {
+        [self removeAnnotationsFromMap];
     }
     
+    NSInteger numberOfPlacemarks = self.placemarks.count;
+    annotations = [[NSMutableArray alloc] initWithCapacity:numberOfPlacemarks];
+    
+    [self.placemarks enumerateObjectsUsingBlock:^(id<MKAnnotation> annotation, NSUInteger idx, BOOL *stop) {
+        [annotations addObject:annotation];
+    }];
+    
     dispatch_async(dispatch_get_main_queue(), ^{
-        [stdMapView addAnnotations:mapAnnotations];
+        [stdMapView addAnnotations:annotations];
+    });
+}
+
+- (void)removeAnnotationsFromMap {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [stdMapView removeAnnotation:[annotations copy]];
+        annotations = nil;
     });
 }
 
@@ -275,14 +286,39 @@
     }
 }
 
-#pragma mark Notification handlers
-- (void)handleApplicationDidEnterBackground:(NSNotification *)notification {
+- (void)initialize {
+    stdMapView.showsUserLocation = YES;
+    [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
+
+    _visualizationMode = VisualizationModeMap;
+    initialized = YES;
+}
+
+#pragma mark Public methods
+- (void)start {
+    if (!initialized) {
+        [self initialize];
+    }
+    
+    if (!annotations) {
+        [self addAnnotationsToMap];
+    }
+    
+    [self startMonitoringDeviceMotion];
+}
+
+- (void)stop {
     [self stopMonitoringDeviceMotion];
     [self setMotionManager:nil];
 }
 
+#pragma mark Notification handlers
+- (void)handleApplicationDidEnterBackground:(NSNotification *)notification {
+    [self stop];
+}
+
 - (void)handleApplicationWillEnterForeground:(NSNotification *)notification {
-    [self startMonitoringDeviceMotion];
+    [self start];
 }
 
 - (void)handleDeviceAcceleration:(CMAccelerometerData *)accelerometerData error:(NSError *)error {
@@ -296,23 +332,43 @@
     
     dispatch_async(dispatch_get_main_queue(), ^{
         switch (_visualizationMode) {
-            case VisualizationModeAugmentedReality:
-            {
+            case VisualizationModeAugmentedReality: {
+                stdMapView.showsUserLocation = NO;
+                [stdMapView setUserTrackingMode:MKUserTrackingModeNone animated:NO];
+
                 [self.delegate presentAugmentedRealityController:self.imagePickerController
                                                       completion:^{
                                                           self.arMapView.showsUserLocation = YES;
+                                                          [self.arMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
                                                           [self layoutScreen];
                                                       }];
             }
                 break;
                 
-            default:
-                self.arMapView.showsUserLocation = NO;
-                [self.arMapView setUserTrackingMode:MKUserTrackingModeNone animated:NO];
+            case VisualizationModeMap: {
+                [self setArMapView:nil];
+                stdMapView.showsUserLocation = YES;
+                [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
                 
-                [self.delegate dismissAugmentedRealityControllerWithCompletionBlock:^{
+                if (previousVisualizationMode == VisualizationModeAugmentedReality) {
+                    [self.delegate dismissAugmentedRealityControllerWithCompletionBlock:^{
+                        [self layoutScreen];
+                    }];
+                } else {
                     [self layoutScreen];
-                }];
+                }
+            }
+                break;
+                
+            default:
+                stdMapView.showsUserLocation = YES;
+                [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
+                
+                if (previousVisualizationMode == VisualizationModeAugmentedReality) {
+                    [self.delegate dismissAugmentedRealityControllerWithCompletionBlock:^{
+                        [self layoutScreen];
+                    }];
+                }
                 break;
         }
     });

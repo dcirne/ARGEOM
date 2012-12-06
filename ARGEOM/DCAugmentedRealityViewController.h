@@ -22,9 +22,8 @@ typedef enum : NSInteger {
 @property (nonatomic, weak) IBOutlet id<DCAugmentedRealityViewControllerDelegate> delegate;
 @property (nonatomic, readonly, getter = visualizationMode) VisualizationMode visualizationMode;
 
-- (void)addAnnotationsToMap;
-- (void)startMonitoringDeviceMotion;
-- (void)stopMonitoringDeviceMotion;
+- (void)start;
+- (void)stop;
 
 @end
 
