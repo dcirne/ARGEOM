@@ -39,24 +39,6 @@
             <point key="canvasLocation" x="156" y="162"/>
         </scene>
     </scenes>
-    <classes>
-        <class className="DCAugmentedRealityViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/DCAugmentedRealityViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="delegate"/>
-                <relationship kind="outlet" name="stdMapView" candidateClass="MKMapView"/>
-            </relationships>
-        </class>
-        <class className="DCViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/DCViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="arController" candidateClass="DCAugmentedRealityViewController"/>
-            </relationships>
-        </class>
-        <class className="NSLayoutConstraint" superclassName="NSObject">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/NSLayoutConstraint.h"/>
-        </class>
-    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>
