@@ -12,14 +12,39 @@
                         <rect key="frame" x="0.0" y="20" width="568" height="300"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="zHm-qV-fYd"/>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="zHm-qV-fYd">
+                                <connections>
+                                    <outlet property="delegate" destination="tOs-nP-xqu" id="uod-4a-d7q"/>
+                                </connections>
+                            </mapView>
+                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.01" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="JWK-LN-VeL" userLabel="Distance Slider">
+                                <connections>
+                                    <action selector="distanceSliderValueChanged:" destination="tOs-nP-xqu" eventType="valueChanged" id="g0j-cJ-RlV"/>
+                                </connections>
+                            </slider>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.80000000000000004" contentMode="left" text="Label" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="X6u-t7-QbN" userLabel="Distance Label">
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="150" id="Ya7-h1-iAW"/>
+                                    <constraint firstAttribute="height" constant="25" id="yWx-XW-75K"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                                <color key="shadowColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                <size key="shadowOffset" width="1" height="1"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstAttribute="bottom" secondItem="JWK-LN-VeL" secondAttribute="bottom" constant="20" symbolic="YES" type="default" id="9bY-wl-7cC"/>
                             <constraint firstItem="zHm-qV-fYd" firstAttribute="leading" secondItem="3" secondAttribute="leading" type="default" id="E9N-5e-7Uh"/>
+                            <constraint firstAttribute="trailing" secondItem="JWK-LN-VeL" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="HTg-rB-d8J"/>
+                            <constraint firstItem="JWK-LN-VeL" firstAttribute="top" secondItem="X6u-t7-QbN" secondAttribute="bottom" constant="8" symbolic="YES" type="default" id="TkI-Lc-lZV"/>
                             <constraint firstItem="zHm-qV-fYd" firstAttribute="trailing" secondItem="3" secondAttribute="trailing" type="default" id="bew-6l-dYw"/>
                             <constraint firstItem="zHm-qV-fYd" firstAttribute="bottom" secondItem="3" secondAttribute="bottom" type="default" id="cnX-4V-q2g"/>
+                            <constraint firstItem="X6u-t7-QbN" firstAttribute="leading" secondItem="3" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="jPW-ff-fZW"/>
                             <constraint firstItem="zHm-qV-fYd" firstAttribute="top" secondItem="3" secondAttribute="top" type="default" id="odY-aw-mOD"/>
+                            <constraint firstItem="JWK-LN-VeL" firstAttribute="leading" secondItem="3" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="z35-es-3ts"/>
                         </constraints>
                         <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     </view>
@@ -32,6 +57,8 @@
                 <customObject id="tOs-nP-xqu" customClass="DCAugmentedRealityViewController">
                     <connections>
                         <outlet property="delegate" destination="2" id="o5F-E7-8Xw"/>
+                        <outlet property="distanceLabel" destination="X6u-t7-QbN" id="jol-fC-naF"/>
+                        <outlet property="distanceSlider" destination="JWK-LN-VeL" id="9Et-V9-P3L"/>
                         <outlet property="stdMapView" destination="zHm-qV-fYd" id="y4M-7f-PPg"/>
                     </connections>
                 </customObject>

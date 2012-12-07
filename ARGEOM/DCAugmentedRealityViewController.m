@@ -31,16 +31,18 @@
 
 @interface DCAugmentedRealityViewController() <MKMapViewDelegate> {
     IBOutlet MKMapView *stdMapView;
+    IBOutlet UISlider *distanceSlider;
+    IBOutlet UILabel *distanceLabel;
     
     NSOperationQueue *motionQueue;
     UIAccelerationValue zAcceleration;
     double phi, alpha, psi, theta;
     double radius;
     CGPoint pointA, pointB, pointC, pointP;
-    BOOL userLocationRegionSet;
     dispatch_queue_t pointsOfInterestQueue;
     NSMutableArray *annotations;
     BOOL initialized;
+    CLLocationDistance distance;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
@@ -61,7 +63,6 @@
     zAcceleration = FLT_MAX;
     phi = M_PI / 3.0;
     radius = 50.0 * ONE_MILE_IN_METERS;
-    userLocationRegionSet = NO;
     annotations = nil;
     initialized = NO;
 
@@ -291,7 +292,24 @@
     [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
 
     _visualizationMode = VisualizationModeMap;
+    [self distanceSliderValueChanged:distanceSlider];
     initialized = YES;
+}
+
+- (void)updateMapVisibleRegion {
+    MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(stdMapView.userLocation.location.coordinate, distance, distance);
+    [stdMapView setRegion:[stdMapView regionThatFits:region]
+                 animated:YES];
+}
+
+- (IBAction)distanceSliderValueChanged:(UISlider *)sender {
+    float miles = 100 * sender.value;
+    distance = miles * ONE_MILE_IN_METERS;
+    
+    NSString *milesText = miles > 1.0 ? @"miles" : @"mile";
+    
+    distanceLabel.text = [NSString stringWithFormat:@"%.1f %@", miles, milesText];
+    [self updateMapVisibleRegion];
 }
 
 #pragma mark Public methods
@@ -418,15 +436,7 @@
             }
         });
     } else if (mapView == stdMapView) {
-        if (!userLocationRegionSet) {
-            CLLocationDistance distance = 50 * ONE_MILE_IN_METERS;
-            [mapView setRegion:MKCoordinateRegionMakeWithDistance(userLocation.location.coordinate, distance, distance)
-                      animated:YES];
-        }
-        
-        if ((userLocation.location.horizontalAccuracy < 200) && (userLocation.location.verticalAccuracy < 200)) {
-            userLocationRegionSet = YES;
-        }
+        [self updateMapVisibleRegion];
     }
 }
 
