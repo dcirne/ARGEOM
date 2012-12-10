@@ -43,6 +43,7 @@
     NSMutableArray *annotations;
     BOOL initialized;
     CLLocationDistance distance;
+    UIInterfaceOrientation previousInterfaceOrientation;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
@@ -69,7 +70,7 @@
     motionQueue = [[NSOperationQueue alloc] init];
     
     pointsOfInterestQueue = dispatch_queue_create("com.dalmocirne.pointsOfInterestQueue", DISPATCH_QUEUE_SERIAL);
-    
+
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     [notificationCenter addObserver:self
                            selector:@selector(handleApplicationDidEnterBackground:)
@@ -135,22 +136,19 @@
     _imagePickerController.navigationBarHidden = YES;
     _imagePickerController.toolbarHidden = YES;
     
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-        UIView *overlayView = [[UIView alloc] initWithFrame:CGRectZero];
-        overlayView.backgroundColor = [UIColor clearColor];
-        overlayView.clipsToBounds = NO;
-        [overlayView addSubview:self.arMapView];
-        
-        _imagePickerController.cameraOverlayView = overlayView;
-    } else {
-        [self setArMapView:nil];
-        
-        CGFloat transformScaleX = 2;
-        CGFloat transformScaleY = 1.8;
-//        CGFloat transformScaleY = 1.0 + 0.22412 * [UIScreen mainScreen].scale;
+    UIView *overlayView = [[UIView alloc] initWithFrame:CGRectZero];
+    overlayView.backgroundColor = [UIColor clearColor];
+    overlayView.clipsToBounds = NO;
+    [overlayView addSubview:self.arMapView];
+    _imagePickerController.cameraOverlayView = overlayView;
+
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
+        CGFloat transformScaleX = [UIScreen mainScreen].scale;
+        CGFloat transformScaleY = [UIScreen mainScreen].scale - 0.2;
         
         CGAffineTransform scaleTransform = CGAffineTransformMakeScale(transformScaleX, transformScaleY);
-        CGAffineTransform rotationTransform = CGAffineTransformMakeRotation(M_PI_2);
+        double rotationAngle = self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft ? M_PI_2 : -M_PI_4;
+        CGAffineTransform rotationTransform = CGAffineTransformMakeRotation(rotationAngle);
         
         _imagePickerController.cameraViewTransform = CGAffineTransformConcat(rotationTransform, scaleTransform);
     }
@@ -210,13 +208,19 @@
 - (void)layoutScreen {
     switch (_visualizationMode) {
         case VisualizationModeAugmentedReality: {
-            CGRect arMapFrame;
+            [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(handleDeviceDidRotate:)
+                                                         name:UIDeviceOrientationDidChangeNotification
+                                                       object:nil];
+            
             CGRect statusBarFrame = [[UIApplication sharedApplication] statusBarFrame];
             CGRect arFrame = [[UIScreen mainScreen] applicationFrame];
             arFrame.origin = CGPointZero;
             
             arFrame.size.width += statusBarFrame.size.width;
             
+            CGRect arMapFrame;
             arMapFrame.size = CGSizeMake(arFrame.size.height * AR_MAP_PERCENTAGE_SCREEN,
                                          arFrame.size.width * AR_MAP_PERCENTAGE_SCREEN);
             
@@ -226,12 +230,24 @@
             [UIView animateWithDuration:[UIApplication sharedApplication].statusBarOrientationAnimationDuration
                              animations:^{
                                  self.arMapView.frame = arMapFrame;
+                             }
+                             completion:^(BOOL finished){
+                                 if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
+                                     CGFloat transformScaleX = [UIScreen mainScreen].scale;
+                                     CGFloat transformScaleY = [UIScreen mainScreen].scale - 0.2;
+                                     
+                                     CGAffineTransform scaleTransform = CGAffineTransformMakeScale(transformScaleX, transformScaleY);
+                                     double rotationAngle = self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft ? M_PI_2 : -M_PI_2;
+                                     CGAffineTransform rotationTransform = CGAffineTransformMakeRotation(rotationAngle);
+                                     
+                                     _imagePickerController.cameraViewTransform = CGAffineTransformConcat(rotationTransform, scaleTransform);
+                                 }
                              }];
         }
             break;
             
         case VisualizationModeMap:
-            
+            [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
             break;
             
         default:
@@ -371,6 +387,7 @@
                 if (previousVisualizationMode == VisualizationModeAugmentedReality) {
                     [self.delegate dismissAugmentedRealityControllerWithCompletionBlock:^{
                         [self layoutScreen];
+                        [self updateMapVisibleRegion];
                     }];
                 } else {
                     [self layoutScreen];
@@ -390,6 +407,10 @@
                 break;
         }
     });
+}
+
+- (void)handleDeviceDidRotate:(NSNotification *)notification {
+    [self layoutScreen];
 }
 
 #pragma mark MKMapViewDelegate
@@ -428,7 +449,7 @@
         }
         
         dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC);
-        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        dispatch_after(popTime, dispatch_get_main_queue(), ^{
             if ([CLLocationManager headingAvailable]) {
                 [self.arMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
             } else {
