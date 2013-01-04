@@ -19,6 +19,8 @@
 #define ONE_MILE_IN_METERS 1609.3440006146
 #define ONE_METER_IN_MILES 0.000621371192237334
 
+typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks);
+
 @interface UIImagePickerController(Landscape)
 - (NSUInteger)supportedInterfaceOrientations;
 @end
@@ -39,7 +41,7 @@
     double phi, alpha, psi, theta;
     double radius;
     CGPoint pointA, pointB, pointC, pointP;
-    dispatch_queue_t pointsOfInterestQueue;
+    dispatch_queue_t placemarksQueue;
     NSMutableArray *annotations;
     BOOL initialized;
     CLLocationDistance distance;
@@ -69,7 +71,7 @@
 
     motionQueue = [[NSOperationQueue alloc] init];
     
-    pointsOfInterestQueue = dispatch_queue_create("com.dalmocirne.pointsOfInterestQueue", DISPATCH_QUEUE_SERIAL);
+    placemarksQueue = dispatch_queue_create("com.dalmocirne.placemarksQueue", DISPATCH_QUEUE_SERIAL);
 
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     [notificationCenter addObserver:self
@@ -255,8 +257,22 @@
     }
 }
 
-- (NSArray *)calculateVisiblePlacemarks {
-    return nil;
+- (void)calculateVisiblePlacemarksWithUserLocation:(MKUserLocation *const)userLocation completionBlock:(PlacemarksCalculationComplete)completionBlock {
+    dispatch_async(placemarksQueue, ^{
+        alpha = userLocation.heading.trueHeading;
+        psi = M_PI / 2.0 - alpha;
+        
+        pointA = CGPointMake(userLocation.location.coordinate.longitude,
+                             userLocation.location.coordinate.latitude);
+        
+        pointB = CGPointMake(radius * cos(psi + phi / 2.0) + pointA.x,
+                             radius * sin(psi + phi / 2.0) + pointA.y);
+        
+        pointC = CGPointMake(radius * cos(psi - phi / 2.0) + pointA.x,
+                             radius * sin(psi - phi / 2.0) + pointA.y);
+        
+        completionBlock(nil);
+    });
 }
 
 - (void)overlayAugmentedRealityAnnotations {
@@ -423,39 +439,31 @@
 }
 
 - (void)mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation {
-    if ((mapView == _arMapView) && (_arMapView.userTrackingMode != MKUserTrackingModeFollowWithHeading)) {
-        if ([CLLocationManager headingAvailable]) {
-            alpha = userLocation.heading.trueHeading;
-            psi = M_PI / 2.0 - alpha;
-            
-            pointA = CGPointMake(userLocation.location.coordinate.longitude,
-                                 userLocation.location.coordinate.latitude);
-            
-            pointB = CGPointMake(radius * cos(psi + phi / 2.0) + pointA.x,
-                                 radius * sin(psi + phi / 2.0) + pointA.y);
-            
-            pointC = CGPointMake(radius * cos(psi - phi / 2.0) + pointA.x,
-                                 radius * sin(psi - phi / 2.0) + pointA.y);
-            
-            dispatch_async(pointsOfInterestQueue, ^{
-                NSArray *visiblePointsOfInterest = [self calculateVisiblePlacemarks];
-                
-                if (visiblePointsOfInterest) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [self overlayAugmentedRealityAnnotations];
-                    });
+    if (mapView == _arMapView) {
+        if (_arMapView.userTrackingMode != MKUserTrackingModeFollowWithHeading) {
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^{
+                if ([CLLocationManager headingAvailable]) {
+                    [self.arMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
+                } else {
+                    [self.arMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
                 }
             });
+            
+            return;
         }
         
-        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC);
-        dispatch_after(popTime, dispatch_get_main_queue(), ^{
-            if ([CLLocationManager headingAvailable]) {
-                [self.arMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
-            } else {
-                [self.arMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
+        if (![CLLocationManager headingAvailable]) {
+            return;
+        }
+        
+        [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks) {
+            if (visiblePlacemarks) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self overlayAugmentedRealityAnnotations];
+                });
             }
-        });
+        }];
     } else if (mapView == stdMapView) {
         [self updateMapVisibleRegion];
     }
