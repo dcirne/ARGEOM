@@ -18,8 +18,9 @@
 #define AR_MAP_INSET 10.0
 #define ONE_MILE_IN_METERS 1609.3440006146
 #define ONE_METER_IN_MILES 0.000621371192237334
+#define NUMBER_DIMENSIONS 2
 
-typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks);
+typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks);
 
 @interface UIImagePickerController(Landscape)
 - (NSUInteger)supportedInterfaceOrientations;
@@ -38,14 +39,14 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks);
     
     NSOperationQueue *motionQueue;
     UIAccelerationValue zAcceleration;
-    double phi, alpha, psi, theta;
+    double phi;
     double radius;
-    CGPoint pointA, pointB, pointC, pointP;
     dispatch_queue_t placemarksQueue;
     NSMutableArray *annotations;
     BOOL initialized;
     CLLocationDistance distance;
     UIInterfaceOrientation previousInterfaceOrientation;
+    UILabel *annotationLabel;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
@@ -259,24 +260,97 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks);
 
 - (void)calculateVisiblePlacemarksWithUserLocation:(MKUserLocation *const)userLocation completionBlock:(PlacemarksCalculationComplete)completionBlock {
     dispatch_async(placemarksQueue, ^{
-        alpha = userLocation.heading.trueHeading;
-        psi = M_PI / 2.0 - alpha;
+        double(^dotProduct)(double *, double *) = ^(double *vector1, double *vector2) {
+            double dotProduct = 0;
+            
+            for (int i = 0; i < NUMBER_DIMENSIONS; ++i) {
+                dotProduct += vector1[i] * vector2[i];
+            }
+
+            return dotProduct;
+        };
         
-        pointA = CGPointMake(userLocation.location.coordinate.longitude,
-                             userLocation.location.coordinate.latitude);
+        double(^norm)(double *) = ^(double *vector) {
+            double norm = 0;
+            
+            for (int i = 0; i < NUMBER_DIMENSIONS; ++i) {
+                norm += pow(vector[i], 2);
+            }
+            
+            norm = sqrt(norm);
+            
+            return norm;
+        };
         
-        pointB = CGPointMake(radius * cos(psi + phi / 2.0) + pointA.x,
-                             radius * sin(psi + phi / 2.0) + pointA.y);
+        double alpha = userLocation.heading.trueHeading;
+        double psi = M_PI / 2.0 - alpha;
+        double l = [UIScreen mainScreen].bounds.size.height;
         
-        pointC = CGPointMake(radius * cos(psi - phi / 2.0) + pointA.x,
-                             radius * sin(psi - phi / 2.0) + pointA.y);
+        CGPoint pointA = CGPointMake(userLocation.location.coordinate.longitude,
+                                     userLocation.location.coordinate.latitude);
         
-        completionBlock(nil);
+        CGPoint pointB = CGPointMake(radius * cos(psi + phi / 2.0) + pointA.x,
+                                     radius * sin(psi + phi / 2.0) + pointA.y);
+        
+        CGPoint pointC = CGPointMake(radius * cos(psi - phi / 2.0) + pointA.x,
+                                     radius * sin(psi - phi / 2.0) + pointA.y);
+        
+        CGPoint pointM = CGPointMake(radius * cos(psi) + pointA.x,
+                                     radius * sin(psi) + pointA.y);
+        
+        double vectorAB[NUMBER_DIMENSIONS] = {pointB.x - pointA.x, pointB.y - pointA.y};
+        
+        double vectorAC[NUMBER_DIMENSIONS] = {pointC.x - pointA.x, pointC.y - pointA.y};
+        
+        double vectorAM[NUMBER_DIMENSIONS] = {pointM.x - pointA.x, pointM.y - pointA.y};
+        
+        double vectorBC[NUMBER_DIMENSIONS] = {pointC.x - pointB.x, pointC.y - pointB.y};
+        
+        NSMutableArray *visiblePlacemarks = [[NSMutableArray alloc] initWithCapacity:1];
+        NSMutableArray *nonVisiblePlacemarks = [[NSMutableArray alloc] initWithCapacity:1];
+        
+        double lambda, sigma, theta, dPrime;
+        CGPoint pointP;
+        double vectorAP[NUMBER_DIMENSIONS];
+        for (DCPlacemark *placemark in self.placemarks) {
+            pointP = CGPointMake(placemark.coordinate.longitude, placemark.coordinate.latitude);
+            vectorAP[0] = pointP.x - pointA.x;
+            vectorAP[1] = pointP.y - pointA.y;
+
+            lambda = dotProduct(vectorAP, vectorAB) / pow(norm(vectorAB), 2);
+            sigma = dotProduct(vectorAP, vectorAC) / pow(norm(vectorAC), 2);
+            NSLog(@"lambda: %.4f, sigma: %.4f", lambda, sigma);
+            if ((lambda > 0) && (sigma > 0) && (pow(lambda, 2) + pow(sigma, 2) <= 1)) {
+                theta = acos(dotProduct(vectorAM, vectorAP) / (norm(vectorAM) * norm(vectorAP)));
+                
+                dPrime = l * norm(vectorAP) * sin(theta) / norm(vectorBC);
+                NSLog(@"dPrime: %.4f", dPrime);
+                [visiblePlacemarks addObject:placemark];
+            } else {
+                [nonVisiblePlacemarks addObject:placemark];
+            }
+        }
+        
+        completionBlock([visiblePlacemarks copy], [nonVisiblePlacemarks copy]);
     });
 }
 
 - (void)overlayAugmentedRealityAnnotations {
+    CGRect frame = CGRectMake(_arMapView.userLocation.heading.trueHeading, 100, 300, 50);
+
+    if (!annotationLabel) {
+        annotationLabel = [[UILabel alloc] initWithFrame:frame];
+        annotationLabel.backgroundColor = [UIColor yellowColor];
+        annotationLabel.textColor = [UIColor whiteColor];
+        annotationLabel.shadowColor = [UIColor blackColor];
+        annotationLabel.shadowOffset = CGSizeMake(1, 1);
+        annotationLabel.alpha = 0.5;
+        annotationLabel.text = @"AR Annotation";
+        annotationLabel.textAlignment = UITextAlignmentCenter;
+        [_imagePickerController.view addSubview:annotationLabel];
+    }
     
+    annotationLabel.frame = frame;
 }
 
 - (void)addAnnotationsToMap {
@@ -457,7 +531,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks);
             return;
         }
         
-        [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks) {
+        [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
             if (visiblePlacemarks) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [self overlayAugmentedRealityAnnotations];
