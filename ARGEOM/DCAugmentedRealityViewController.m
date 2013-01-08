@@ -19,6 +19,7 @@
 #define ONE_MILE_IN_METERS 1609.3440006146
 #define ONE_METER_IN_MILES 0.000621371192237334
 #define NUMBER_DIMENSIONS 2
+#define EARTH_RADIUS 3956.547
 
 typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks);
 
@@ -47,6 +48,9 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     CLLocationDistance distance;
     UIInterfaceOrientation previousInterfaceOrientation;
     UILabel *annotationLabel;
+    double piOver180;
+    double milesPerDegreeOfLatitude;
+    double milesPerDegreeOfLongigute;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
@@ -66,9 +70,12 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     _visualizationMode = VisualizationModeUnknown;
     zAcceleration = FLT_MAX;
     phi = M_PI / 3.0;
-    radius = 50.0 * ONE_MILE_IN_METERS;
+    radius = 50.0;
     annotations = nil;
     initialized = NO;
+    piOver180  = M_PI / 180.0;
+    milesPerDegreeOfLatitude = 2 * M_PI * EARTH_RADIUS / 360.0;
+    milesPerDegreeOfLongigute = milesPerDegreeOfLatitude; // Initialization only
 
     motionQueue = [[NSOperationQueue alloc] init];
     
@@ -282,21 +289,24 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
             return norm;
         };
         
-        double alpha = userLocation.heading.trueHeading;
+        milesPerDegreeOfLongigute = milesPerDegreeOfLatitude * cos(userLocation.location.coordinate.latitude * piOver180);
+        
+        double alpha = userLocation.heading.trueHeading * piOver180;
         double psi = M_PI / 2.0 - alpha;
-        double l = [UIScreen mainScreen].bounds.size.height;
+        double longitudeRadiusInDegrees = radius / milesPerDegreeOfLongigute;
+        double latitudeRadiusInDegrees = radius / milesPerDegreeOfLatitude;
         
         CGPoint pointA = CGPointMake(userLocation.location.coordinate.longitude,
                                      userLocation.location.coordinate.latitude);
         
-        CGPoint pointB = CGPointMake(radius * cos(psi + phi / 2.0) + pointA.x,
-                                     radius * sin(psi + phi / 2.0) + pointA.y);
+        CGPoint pointB = CGPointMake(longitudeRadiusInDegrees * cos(psi + phi / 2.0) + pointA.x,
+                                     latitudeRadiusInDegrees * sin(psi + phi / 2.0) + pointA.y);
         
-        CGPoint pointC = CGPointMake(radius * cos(psi - phi / 2.0) + pointA.x,
-                                     radius * sin(psi - phi / 2.0) + pointA.y);
+        CGPoint pointC = CGPointMake(longitudeRadiusInDegrees * cos(psi - phi / 2.0) + pointA.x,
+                                     latitudeRadiusInDegrees * sin(psi - phi / 2.0) + pointA.y);
         
-        CGPoint pointM = CGPointMake(radius * cos(psi) + pointA.x,
-                                     radius * sin(psi) + pointA.y);
+        CGPoint pointM = CGPointMake(longitudeRadiusInDegrees * cos(psi) + pointA.x,
+                                     latitudeRadiusInDegrees * sin(psi) + pointA.y);
         
         double vectorAB[NUMBER_DIMENSIONS] = {pointB.x - pointA.x, pointB.y - pointA.y};
         
@@ -312,6 +322,8 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         double lambda, sigma, theta, dPrime;
         CGPoint pointP;
         double vectorAP[NUMBER_DIMENSIONS];
+        int i = 0;
+        double l = [UIScreen mainScreen].bounds.size.height;
         for (DCPlacemark *placemark in self.placemarks) {
             pointP = CGPointMake(placemark.coordinate.longitude, placemark.coordinate.latitude);
             vectorAP[0] = pointP.x - pointA.x;
@@ -319,16 +331,20 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 
             lambda = dotProduct(vectorAP, vectorAB) / pow(norm(vectorAB), 2);
             sigma = dotProduct(vectorAP, vectorAC) / pow(norm(vectorAC), 2);
-            NSLog(@"lambda: %.4f, sigma: %.4f", lambda, sigma);
+            //NSLog(@"lambda: %.4f, sigma: %.4f", lambda, sigma);
             if ((lambda > 0) && (sigma > 0) && (pow(lambda, 2) + pow(sigma, 2) <= 1)) {
                 theta = acos(dotProduct(vectorAM, vectorAP) / (norm(vectorAM) * norm(vectorAP)));
                 
                 dPrime = l * norm(vectorAP) * sin(theta) / norm(vectorBC);
-                NSLog(@"dPrime: %.4f", dPrime);
+                //NSLog(@"dPrime: %.4f", dPrime);
+                NSLog(@"%d - %@", i, @"Visible");
                 [visiblePlacemarks addObject:placemark];
             } else {
                 [nonVisiblePlacemarks addObject:placemark];
+                NSLog(@"%d - %@", i, @"Not Visible");
             }
+            
+            ++i;
         }
         
         completionBlock([visiblePlacemarks copy], [nonVisiblePlacemarks copy]);
@@ -409,12 +425,12 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (IBAction)distanceSliderValueChanged:(UISlider *)sender {
-    float miles = 100 * sender.value;
-    distance = miles * ONE_MILE_IN_METERS;
+    radius = 100 * sender.value;
+    distance = radius * ONE_MILE_IN_METERS;
     
-    NSString *milesText = miles > 1.0 ? @"miles" : @"mile";
+    NSString *milesText = radius > 1.0 ? @"miles" : @"mile";
     
-    distanceLabel.text = [NSString stringWithFormat:@"%.1f %@", miles, milesText];
+    distanceLabel.text = [NSString stringWithFormat:@"%.1f %@", radius, milesText];
     [self updateMapVisibleRegion];
 }
 
