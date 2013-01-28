@@ -11,6 +11,7 @@
 #import <CoreMotion/CoreMotion.h>
 #import "DCPlacemark.h"
 #import <CoreLocation/CoreLocation.h>
+#import <AVFoundation/AVFoundation.h>
 
 #define ACCELERATION_FILTER 0.2
 #define Z_ACCELERATION_THRESHOLD 0.7
@@ -57,6 +58,8 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 @property (nonatomic, strong) MKMapView *arMapView;
 @property (nonatomic, readonly, getter = imagePickerController) UIImagePickerController *imagePickerController;
 @property (nonatomic, strong) NSArray *placemarks;
+@property (nonatomic, strong) AVCaptureSession *captureSession;
+@property (nonatomic, strong) AVCaptureVideoPreviewLayer *videoPreviewLayer;
 
 @end
 
@@ -212,6 +215,41 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     
     _placemarks = [placemarks copy];
     return _placemarks;
+}
+
+- (AVCaptureSession *)captureSession {
+    if (_captureSession) {
+        return _captureSession;
+    }
+    
+	_captureSession = [AVCaptureSession new];
+	[_captureSession setSessionPreset:AVCaptureSessionPresetHigh];
+    
+    return _captureSession;
+}
+
+- (AVCaptureVideoPreviewLayer *)videoPreviewLayer {
+    if (_videoPreviewLayer) {
+        return _videoPreviewLayer;
+    }
+    
+	NSError *error = nil;
+	AVCaptureDevice *backCamera = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+	AVCaptureDeviceInput *captureDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:backCamera error:&error];
+
+	if (error) {
+		return nil;
+    }
+    
+	if ([self.captureSession canAddInput:captureDeviceInput]) {
+		[self.captureSession addInput:captureDeviceInput];
+    }
+	
+	_videoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.captureSession];
+	[_videoPreviewLayer setVideoGravity:AVLayerVideoGravityResizeAspect];
+	[_videoPreviewLayer setFrame:self.view.bounds];
+	
+    return _videoPreviewLayer;
 }
 
 #pragma mark Private methods
@@ -434,6 +472,20 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     [self updateMapVisibleRegion];
 }
 
+- (void)startAugmentedReality {
+	[self.view.layer setBackgroundColor:[UIColor blackColor].CGColor];
+	[self.view.layer addSublayer:self.videoPreviewLayer];
+	
+    [self.captureSession startRunning];
+}
+
+- (void)stopAugmentedReality {
+    [self.captureSession stopRunning];
+    
+    [self.videoPreviewLayer removeFromSuperlayer];
+    [self setVideoPreviewLayer:nil];
+}
+
 #pragma mark Public methods
 - (void)start {
     if (!initialized) {
@@ -454,6 +506,8 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 
 #pragma mark Notification handlers
 - (void)handleApplicationDidEnterBackground:(NSNotification *)notification {
+    [self stopAugmentedReality];
+    [self setCaptureSession:nil];
     [self stop];
 }
 
