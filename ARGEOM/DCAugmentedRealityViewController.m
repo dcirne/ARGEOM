@@ -52,10 +52,10 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     double piOver180;
     double milesPerDegreeOfLatitude;
     double milesPerDegreeOfLongigute;
+    BOOL isObservingOrientationChange;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
-@property (nonatomic, strong) MKMapView *arMapView;
 @property (nonatomic, readonly, getter = imagePickerController) UIImagePickerController *imagePickerController;
 @property (nonatomic, strong) NSArray *placemarks;
 @property (nonatomic, strong) AVCaptureSession *captureSession;
@@ -79,6 +79,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     piOver180  = M_PI / 180.0;
     milesPerDegreeOfLatitude = 2 * M_PI * EARTH_RADIUS / 360.0;
     milesPerDegreeOfLongigute = milesPerDegreeOfLatitude; // Initialization only
+    isObservingOrientationChange = NO;
 
     motionQueue = [[NSOperationQueue alloc] init];
     
@@ -120,18 +121,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     return _motionManager;
 }
 
-- (MKMapView *)arMapView {
-    if (_arMapView) {
-        return _arMapView;
-    }
-    
-    _arMapView = [[MKMapView alloc] initWithFrame:CGRectMake(1, 1, 700, 700)];
-    _arMapView.delegate = self;
-    _arMapView.alpha = 0.6;
-    
-    return _arMapView;
-}
-
 - (UIImagePickerController *)imagePickerController {
     if (_imagePickerController) {
         return _imagePickerController;
@@ -152,7 +141,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     UIView *overlayView = [[UIView alloc] initWithFrame:CGRectZero];
     overlayView.backgroundColor = [UIColor clearColor];
     overlayView.clipsToBounds = NO;
-    [overlayView addSubview:self.arMapView];
+//    [overlayView addSubview:self.arMapView];
     _imagePickerController.cameraOverlayView = overlayView;
 
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
@@ -254,53 +243,59 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 
 #pragma mark Private methods
 - (void)layoutScreen {
+    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+    UIDevice *device = [UIDevice currentDevice];
+    CGRect statusBarFrame = [[UIApplication sharedApplication] statusBarFrame];
+    CGRect mapFrame;
+
+    CGRect appFrame = [[UIScreen mainScreen] applicationFrame];
+    
     switch (_visualizationMode) {
         case VisualizationModeAugmentedReality: {
-            [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(handleDeviceDidRotate:)
-                                                         name:UIDeviceOrientationDidChangeNotification
-                                                       object:nil];
+            [device beginGeneratingDeviceOrientationNotifications];
             
-            CGRect statusBarFrame = [[UIApplication sharedApplication] statusBarFrame];
-            CGRect arFrame = [[UIScreen mainScreen] applicationFrame];
-            arFrame.origin = CGPointZero;
+            if (!isObservingOrientationChange) {
+                isObservingOrientationChange = YES;
+                
+                [notificationCenter addObserver:self
+                                       selector:@selector(handleDeviceDidRotate:)
+                                           name:UIDeviceOrientationDidChangeNotification
+                                         object:nil];
+            }
             
-            arFrame.size.width += statusBarFrame.size.width;
+            appFrame.origin = CGPointZero;
+            appFrame.size.width += statusBarFrame.size.width;
+
+            mapFrame.size = CGSizeMake(appFrame.size.height * AR_MAP_PERCENTAGE_SCREEN,
+                                       appFrame.size.width * AR_MAP_PERCENTAGE_SCREEN);
             
-            CGRect arMapFrame;
-            arMapFrame.size = CGSizeMake(arFrame.size.height * AR_MAP_PERCENTAGE_SCREEN,
-                                         arFrame.size.width * AR_MAP_PERCENTAGE_SCREEN);
-            
-            arMapFrame.origin = CGPointMake(arFrame.size.height - arMapFrame.size.width - AR_MAP_INSET,
-                                            arFrame.size.width - arMapFrame.size.height - AR_MAP_INSET);
-            
-            [UIView animateWithDuration:[UIApplication sharedApplication].statusBarOrientationAnimationDuration
-                             animations:^{
-                                 self.arMapView.frame = arMapFrame;
-                             }
-                             completion:^(BOOL finished){
-                                 if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
-                                     CGFloat transformScaleX = [UIScreen mainScreen].scale;
-                                     CGFloat transformScaleY = [UIScreen mainScreen].scale - 0.2;
-                                     
-                                     CGAffineTransform scaleTransform = CGAffineTransformMakeScale(transformScaleX, transformScaleY);
-                                     double rotationAngle = self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft ? M_PI_2 : -M_PI_2;
-                                     CGAffineTransform rotationTransform = CGAffineTransformMakeRotation(rotationAngle);
-                                     
-                                     _imagePickerController.cameraViewTransform = CGAffineTransformConcat(rotationTransform, scaleTransform);
-                                 }
-                             }];
+            mapFrame.origin = CGPointMake(appFrame.size.height - mapFrame.size.width - AR_MAP_INSET,
+                                          appFrame.size.width - mapFrame.size.height - AR_MAP_INSET);
         }
             break;
             
-        case VisualizationModeMap:
-            [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
+        case VisualizationModeMap: {
+            [device endGeneratingDeviceOrientationNotifications];
+            
+            if (isObservingOrientationChange) {
+                isObservingOrientationChange = NO;
+                
+                [notificationCenter removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
+            }
+            
+            mapFrame = CGRectMake(0, 0, appFrame.size.height, appFrame.size.width);
+        }
             break;
             
         default:
+            return;
             break;
     }
+    
+    [UIView animateWithDuration:[UIApplication sharedApplication].statusBarOrientationAnimationDuration
+                     animations:^{
+                         stdMapView.frame = mapFrame;
+                     }];
 }
 
 - (void)calculateVisiblePlacemarksWithUserLocation:(MKUserLocation *const)userLocation completionBlock:(PlacemarksCalculationComplete)completionBlock {
@@ -390,7 +385,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (void)overlayAugmentedRealityAnnotations {
-    CGRect frame = CGRectMake(_arMapView.userLocation.heading.trueHeading, 100, 300, 50);
+    CGRect frame = CGRectMake(stdMapView.userLocation.heading.trueHeading, 100, 300, 50);
 
     if (!annotationLabel) {
         annotationLabel = [[UILabel alloc] initWithFrame:frame];
@@ -477,6 +472,12 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 	[self.view.layer addSublayer:self.videoPreviewLayer];
 	
     [self.captureSession startRunning];
+    
+    stdMapView.showsUserLocation = YES;
+    [stdMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
+    
+    [self layoutScreen];
+    [self updateMapVisibleRegion];
 }
 
 - (void)stopAugmentedReality {
@@ -484,6 +485,12 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     
     [self.videoPreviewLayer removeFromSuperlayer];
     [self setVideoPreviewLayer:nil];
+    
+    stdMapView.showsUserLocation = YES;
+    [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
+
+    [self layoutScreen];
+    [self updateMapVisibleRegion];
 }
 
 #pragma mark Public methods
@@ -526,44 +533,18 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     
     dispatch_async(dispatch_get_main_queue(), ^{
         switch (_visualizationMode) {
-            case VisualizationModeAugmentedReality: {
-                stdMapView.showsUserLocation = NO;
-                [stdMapView setUserTrackingMode:MKUserTrackingModeNone animated:NO];
-
-                [self.delegate presentAugmentedRealityController:self.imagePickerController
-                                                      completion:^{
-                                                          self.arMapView.showsUserLocation = YES;
-                                                          [self.arMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
-                                                          [self layoutScreen];
-                                                      }];
-            }
+            case VisualizationModeAugmentedReality:
+                [self startAugmentedReality];
                 break;
                 
-            case VisualizationModeMap: {
-                [self setArMapView:nil];
-                stdMapView.showsUserLocation = YES;
-                [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
-                
-                if (previousVisualizationMode == VisualizationModeAugmentedReality) {
-                    [self.delegate dismissAugmentedRealityControllerWithCompletionBlock:^{
-                        [self layoutScreen];
-                        [self updateMapVisibleRegion];
-                    }];
-                } else {
-                    [self layoutScreen];
-                }
-            }
+            case VisualizationModeMap:
+                [self stopAugmentedReality];
                 break;
                 
             default:
                 stdMapView.showsUserLocation = YES;
                 [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
-                
-                if (previousVisualizationMode == VisualizationModeAugmentedReality) {
-                    [self.delegate dismissAugmentedRealityControllerWithCompletionBlock:^{
-                        [self layoutScreen];
-                    }];
-                }
+                [self layoutScreen];
                 break;
         }
     });
@@ -583,33 +564,41 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (void)mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation {
-    if (mapView == _arMapView) {
-        if (_arMapView.userTrackingMode != MKUserTrackingModeFollowWithHeading) {
-            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC);
-            dispatch_after(popTime, dispatch_get_main_queue(), ^{
-                if ([CLLocationManager headingAvailable]) {
-                    [self.arMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
-                } else {
-                    [self.arMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
-                }
-            });
-            
-            return;
-        }
-        
-        if (![CLLocationManager headingAvailable]) {
-            return;
-        }
-        
-        [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
-            if (visiblePlacemarks) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self overlayAugmentedRealityAnnotations];
+    switch (_visualizationMode) {
+        case VisualizationModeAugmentedReality: {
+            if (mapView.userTrackingMode != MKUserTrackingModeFollowWithHeading) {
+                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC);
+                dispatch_after(popTime, dispatch_get_main_queue(), ^{
+                    if ([CLLocationManager headingAvailable]) {
+                        [mapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
+                    } else {
+                        [mapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
+                    }
                 });
+                
+                return;
             }
-        }];
-    } else if (mapView == stdMapView) {
-        [self updateMapVisibleRegion];
+            
+            if (![CLLocationManager headingAvailable]) {
+                return;
+            }
+            
+            [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
+                if (visiblePlacemarks) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self overlayAugmentedRealityAnnotations];
+                    });
+                }
+            }];
+        }
+            break;
+            
+        case VisualizationModeMap:
+            [self updateMapVisibleRegion];
+            break;
+            
+        default:
+            break;
     }
 }
 
