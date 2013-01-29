@@ -12,6 +12,11 @@
                         <rect key="frame" x="0.0" y="20" width="568" height="300"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
+                            <view contentMode="scaleToFill" id="o9t-Vc-p4t" userLabel="Augmented Reality View">
+                                <rect key="frame" x="0.0" y="0.0" width="568" height="300"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" id="zHm-qV-fYd">
                                 <rect key="frame" x="0.0" y="0.0" width="568" height="300"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -36,7 +41,7 @@
                                 <size key="shadowOffset" width="1" height="1"/>
                             </label>
                         </subviews>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                         <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     </view>
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
@@ -47,7 +52,7 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="4" sceneMemberID="firstResponder"/>
                 <customObject id="tOs-nP-xqu" customClass="DCAugmentedRealityViewController">
                     <connections>
-                        <outlet property="delegate" destination="2" id="o5F-E7-8Xw"/>
+                        <outlet property="augmentedRealityView" destination="o9t-Vc-p4t" id="bMt-Dw-xb2"/>
                         <outlet property="distanceLabel" destination="X6u-t7-QbN" id="jol-fC-naF"/>
                         <outlet property="distanceSlider" destination="JWK-LN-VeL" id="9Et-V9-P3L"/>
                         <outlet property="stdMapView" destination="zHm-qV-fYd" id="y4M-7f-PPg"/>
@@ -62,7 +67,7 @@
             <source key="sourceIdentifier" type="project" relativePath="./Classes/DCAugmentedRealityViewController.h"/>
             <relationships>
                 <relationship kind="action" name="distanceSliderValueChanged:" candidateClass="UISlider"/>
-                <relationship kind="outlet" name="delegate"/>
+                <relationship kind="outlet" name="augmentedRealityView" candidateClass="UIView"/>
                 <relationship kind="outlet" name="distanceLabel" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="distanceSlider" candidateClass="UISlider"/>
                 <relationship kind="outlet" name="stdMapView" candidateClass="MKMapView"/>

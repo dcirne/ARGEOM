@@ -24,16 +24,6 @@
 
 typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks);
 
-@interface UIImagePickerController(Landscape)
-- (NSUInteger)supportedInterfaceOrientations;
-@end
-
-@implementation UIImagePickerController(Landscape)
-- (NSUInteger)supportedInterfaceOrientations {
-    return UIInterfaceOrientationMaskLandscape;
-}
-@end
-
 @interface DCAugmentedRealityViewController() <MKMapViewDelegate> {
     IBOutlet MKMapView *stdMapView;
     IBOutlet UISlider *distanceSlider;
@@ -56,7 +46,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
-@property (nonatomic, readonly, getter = imagePickerController) UIImagePickerController *imagePickerController;
 @property (nonatomic, strong) NSArray *placemarks;
 @property (nonatomic, strong) AVCaptureSession *captureSession;
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer *videoPreviewLayer;
@@ -67,7 +56,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 @implementation DCAugmentedRealityViewController
 
 @synthesize visualizationMode = _visualizationMode;
-@synthesize imagePickerController = _imagePickerController;
 
 - (void)awakeFromNib {
     _visualizationMode = VisualizationModeUnknown;
@@ -119,43 +107,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     }
     
     return _motionManager;
-}
-
-- (UIImagePickerController *)imagePickerController {
-    if (_imagePickerController) {
-        return _imagePickerController;
-    }
-    
-    if (![UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
-        return nil;
-    }
-    
-    _imagePickerController = [[UIImagePickerController alloc] init];
-    _imagePickerController.sourceType = UIImagePickerControllerSourceTypeCamera;
-    _imagePickerController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
-    _imagePickerController.showsCameraControls = NO;
-    _imagePickerController.wantsFullScreenLayout = YES;
-    _imagePickerController.navigationBarHidden = YES;
-    _imagePickerController.toolbarHidden = YES;
-    
-    UIView *overlayView = [[UIView alloc] initWithFrame:CGRectZero];
-    overlayView.backgroundColor = [UIColor clearColor];
-    overlayView.clipsToBounds = NO;
-//    [overlayView addSubview:self.arMapView];
-    _imagePickerController.cameraOverlayView = overlayView;
-
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
-        CGFloat transformScaleX = [UIScreen mainScreen].scale;
-        CGFloat transformScaleY = [UIScreen mainScreen].scale - 0.2;
-        
-        CGAffineTransform scaleTransform = CGAffineTransformMakeScale(transformScaleX, transformScaleY);
-        double rotationAngle = self.interfaceOrientation == UIInterfaceOrientationLandscapeLeft ? M_PI_2 : -M_PI_4;
-        CGAffineTransform rotationTransform = CGAffineTransformMakeRotation(rotationAngle);
-        
-        _imagePickerController.cameraViewTransform = CGAffineTransformConcat(rotationTransform, scaleTransform);
-    }
-    
-    return _imagePickerController;
 }
 
 - (NSArray *)placemarks {
@@ -214,6 +165,16 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 	_captureSession = [AVCaptureSession new];
 	[_captureSession setSessionPreset:AVCaptureSessionPresetHigh];
     
+	NSError *error = nil;
+	AVCaptureDevice *backCamera = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+	AVCaptureDeviceInput *captureDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:backCamera error:&error];
+    
+	if (error || ![_captureSession canAddInput:captureDeviceInput]) {
+		return nil;
+    }
+    
+    [_captureSession addInput:captureDeviceInput];
+
     return _captureSession;
 }
 
@@ -222,21 +183,27 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         return _videoPreviewLayer;
     }
     
-	NSError *error = nil;
-	AVCaptureDevice *backCamera = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
-	AVCaptureDeviceInput *captureDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:backCamera error:&error];
-
-	if (error) {
-		return nil;
-    }
-    
-	if ([self.captureSession canAddInput:captureDeviceInput]) {
-		[self.captureSession addInput:captureDeviceInput];
-    }
-	
 	_videoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.captureSession];
-	[_videoPreviewLayer setVideoGravity:AVLayerVideoGravityResizeAspect];
-	[_videoPreviewLayer setFrame:self.view.bounds];
+	[_videoPreviewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
+    CGRect frame = self.augmentedRealityView.bounds;
+	[_videoPreviewLayer setFrame:frame];
+    
+    CGFloat rotationAngle;
+	switch ([[UIDevice currentDevice] orientation]) {
+		case UIDeviceOrientationLandscapeLeft:
+			rotationAngle = -M_PI_2;
+			break;
+            
+		case UIDeviceOrientationLandscapeRight:
+			rotationAngle = M_PI_2;
+			break;
+            
+		default:
+			rotationAngle = -M_PI_2;
+			break;
+	}
+
+    [self.augmentedRealityView setTransform:CGAffineTransformMakeRotation(rotationAngle)];
 	
     return _videoPreviewLayer;
 }
@@ -245,10 +212,9 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 - (void)layoutScreen {
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     UIDevice *device = [UIDevice currentDevice];
-    CGRect statusBarFrame = [[UIApplication sharedApplication] statusBarFrame];
     CGRect mapFrame;
 
-    CGRect appFrame = [[UIScreen mainScreen] applicationFrame];
+    CGRect arFrame = self.augmentedRealityView.bounds;
     
     switch (_visualizationMode) {
         case VisualizationModeAugmentedReality: {
@@ -263,14 +229,11 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
                                          object:nil];
             }
             
-            appFrame.origin = CGPointZero;
-            appFrame.size.width += statusBarFrame.size.width;
-
-            mapFrame.size = CGSizeMake(appFrame.size.height * AR_MAP_PERCENTAGE_SCREEN,
-                                       appFrame.size.width * AR_MAP_PERCENTAGE_SCREEN);
+            mapFrame.size = CGSizeMake(arFrame.size.width * AR_MAP_PERCENTAGE_SCREEN,
+                                       arFrame.size.height * AR_MAP_PERCENTAGE_SCREEN);
             
-            mapFrame.origin = CGPointMake(appFrame.size.height - mapFrame.size.width - AR_MAP_INSET,
-                                          appFrame.size.width - mapFrame.size.height - AR_MAP_INSET);
+            mapFrame.origin = CGPointMake(arFrame.size.width - mapFrame.size.width - AR_MAP_INSET,
+                                          arFrame.size.height - mapFrame.size.height - AR_MAP_INSET);
         }
             break;
             
@@ -283,7 +246,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
                 [notificationCenter removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
             }
             
-            mapFrame = CGRectMake(0, 0, appFrame.size.height, appFrame.size.width);
+            mapFrame = arFrame;
         }
             break;
             
@@ -385,21 +348,21 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (void)overlayAugmentedRealityAnnotations {
-    CGRect frame = CGRectMake(stdMapView.userLocation.heading.trueHeading, 100, 300, 50);
-
-    if (!annotationLabel) {
-        annotationLabel = [[UILabel alloc] initWithFrame:frame];
-        annotationLabel.backgroundColor = [UIColor yellowColor];
-        annotationLabel.textColor = [UIColor whiteColor];
-        annotationLabel.shadowColor = [UIColor blackColor];
-        annotationLabel.shadowOffset = CGSizeMake(1, 1);
-        annotationLabel.alpha = 0.5;
-        annotationLabel.text = @"AR Annotation";
-        annotationLabel.textAlignment = UITextAlignmentCenter;
-        [_imagePickerController.view addSubview:annotationLabel];
-    }
-    
-    annotationLabel.frame = frame;
+//    CGRect frame = CGRectMake(stdMapView.userLocation.heading.trueHeading, 100, 300, 50);
+//
+//    if (!annotationLabel) {
+//        annotationLabel = [[UILabel alloc] initWithFrame:frame];
+//        annotationLabel.backgroundColor = [UIColor yellowColor];
+//        annotationLabel.textColor = [UIColor whiteColor];
+//        annotationLabel.shadowColor = [UIColor blackColor];
+//        annotationLabel.shadowOffset = CGSizeMake(1, 1);
+//        annotationLabel.alpha = 0.5;
+//        annotationLabel.text = @"AR Annotation";
+//        annotationLabel.textAlignment = UITextAlignmentCenter;
+//        [_imagePickerController.view addSubview:annotationLabel];
+//    }
+//    
+//    annotationLabel.frame = frame;
 }
 
 - (void)addAnnotationsToMap {
@@ -468,8 +431,8 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (void)startAugmentedReality {
-	[self.view.layer setBackgroundColor:[UIColor blackColor].CGColor];
-	[self.view.layer addSublayer:self.videoPreviewLayer];
+	[self.augmentedRealityView.layer setBackgroundColor:[UIColor blackColor].CGColor];
+	[self.augmentedRealityView.layer addSublayer:self.videoPreviewLayer];
 	
     [self.captureSession startRunning];
     

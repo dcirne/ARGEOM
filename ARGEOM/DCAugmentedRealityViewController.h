@@ -15,19 +15,12 @@ typedef enum : NSInteger {
     VisualizationModeAugmentedReality
 } VisualizationMode;
 
-@protocol DCAugmentedRealityViewControllerDelegate;
-
 @interface DCAugmentedRealityViewController : UIViewController
 
-@property (nonatomic, weak) IBOutlet id<DCAugmentedRealityViewControllerDelegate> delegate;
 @property (nonatomic, readonly, getter = visualizationMode) VisualizationMode visualizationMode;
+@property (nonatomic, strong) IBOutlet UIView *augmentedRealityView;
 
 - (void)start;
 - (void)stop;
 
-@end
-
-@protocol DCAugmentedRealityViewControllerDelegate <NSObject>
-- (void)presentAugmentedRealityController:(UIViewController *)viewController completion:(dispatch_block_t)completionBlock;
-- (void)dismissAugmentedRealityControllerWithCompletionBlock:(dispatch_block_t)completionBlock;
 @end

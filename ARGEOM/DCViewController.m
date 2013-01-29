@@ -10,7 +10,7 @@
 #import "DCAugmentedRealityViewController.h"
 #import <dispatch/dispatch.h>
 
-@interface DCViewController() <DCAugmentedRealityViewControllerDelegate>
+@interface DCViewController()
 
 @end
 
@@ -26,18 +26,6 @@
 
 - (NSUInteger)supportedInterfaceOrientations {
     return UIInterfaceOrientationMaskLandscape;
-}
-
-#pragma mark DCAugmentedRealityViewControllerDelegate methods
-- (void)presentAugmentedRealityController:(UIViewController *)viewController completion:(dispatch_block_t)completionBlock {
-    [self presentViewController:viewController
-                       animated:YES
-                     completion:completionBlock];
-}
-
-- (void)dismissAugmentedRealityControllerWithCompletionBlock:(dispatch_block_t)completionBlock {
-    [self dismissViewControllerAnimated:YES
-                             completion:completionBlock];
 }
 
 @end
