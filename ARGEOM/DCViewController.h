@@ -12,6 +12,6 @@
 
 @interface DCViewController : UIViewController
 
-@property (nonatomic, strong) IBOutlet DCAugmentedRealityViewController *arController;
+@property (nonatomic, strong) DCAugmentedRealityViewController *arController;
 
 @end

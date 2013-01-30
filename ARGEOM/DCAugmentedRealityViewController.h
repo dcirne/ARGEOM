@@ -18,7 +18,6 @@ typedef enum : NSInteger {
 @interface DCAugmentedRealityViewController : UIViewController
 
 @property (nonatomic, readonly, getter = visualizationMode) VisualizationMode visualizationMode;
-@property (nonatomic, strong) IBOutlet UIView *augmentedRealityView;
 
 - (void)start;
 - (void)stop;

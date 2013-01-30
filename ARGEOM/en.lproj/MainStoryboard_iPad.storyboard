@@ -9,30 +9,37 @@
             <objects>
                 <viewController id="2" customClass="DCViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="5">
-                        <rect key="frame" x="0.0" y="20" width="1024" height="748"/>
+                        <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                    </view>
+                    <nil key="simulatedStatusBarMetrics"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="3" sceneMemberID="firstResponder"/>
+            </objects>
+        </scene>
+        <!--Augmented Reality View Controller-->
+        <scene sceneID="65i-6T-p07">
+            <objects>
+                <viewController storyboardIdentifier="DCAugmentedRealityViewController" id="Dsa-PH-LMT" customClass="DCAugmentedRealityViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="fcV-Fn-Nxg">
+                        <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" id="x6e-P2-mXz" userLabel="Augmented Reality View">
-                                <rect key="frame" x="0.0" y="0.0" width="1024" height="748"/>
+                            <view contentMode="scaleToFill" id="3Df-EA-jU1" userLabel="Preview View">
+                                <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" showsUserLocation="YES" id="azJ-A0-181">
-                                <rect key="frame" x="0.0" y="0.0" width="1024" height="748"/>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" showsUserLocation="YES" id="CJf-Np-MNa">
+                                <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <connections>
-                                    <outlet property="delegate" destination="Bjn-Xx-6ux" id="tQJ-dC-s5W"/>
+                                    <outlet property="delegate" destination="Dsa-PH-LMT" id="Hxa-Ek-Dra"/>
                                 </connections>
                             </mapView>
-                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.01" maxValue="1" id="ocw-bf-7dr" userLabel="Distance Slider">
-                                <rect key="frame" x="18" y="706" width="988" height="23"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                                <connections>
-                                    <action selector="distanceSliderValueChanged:" destination="Bjn-Xx-6ux" eventType="valueChanged" id="TMj-Bw-IWc"/>
-                                </connections>
-                            </slider>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.80000000000000004" contentMode="left" text="Label" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Sh4-Js-0ym" userLabel="Distance Label">
-                                <rect key="frame" x="20" y="673" width="150" height="25"/>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.80000001192092896" contentMode="left" text="Label" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="oCL-8N-Maz" userLabel="Distance Label">
+                                <rect key="frame" x="20" y="949" width="150" height="25"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="20"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -40,25 +47,27 @@
                                 <color key="shadowColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                 <size key="shadowOffset" width="1" height="1"/>
                             </label>
+                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0099999997764825821" maxValue="1" id="4Eq-AS-J0q" userLabel="Distance Slider">
+                                <rect key="frame" x="18" y="982" width="732" height="23"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                <connections>
+                                    <action selector="distanceSliderValueChanged:" destination="Dsa-PH-LMT" eventType="valueChanged" id="P3X-AQ-20C"/>
+                                </connections>
+                            </slider>
                         </subviews>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
-                        <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     </view>
-                    <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                    <nil key="simulatedStatusBarMetrics"/>
                     <connections>
-                        <outlet property="arController" destination="Bjn-Xx-6ux" id="Gyp-PI-eTu"/>
+                        <outlet property="distanceLabel" destination="oCL-8N-Maz" id="QTs-ZC-EO7"/>
+                        <outlet property="distanceSlider" destination="4Eq-AS-J0q" id="HxJ-MG-s50"/>
+                        <outlet property="previewView" destination="3Df-EA-jU1" id="wnQ-Gk-tn2"/>
+                        <outlet property="stdMapView" destination="CJf-Np-MNa" id="0jO-CU-Blx"/>
                     </connections>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="3" sceneMemberID="firstResponder"/>
-                <customObject id="Bjn-Xx-6ux" customClass="DCAugmentedRealityViewController">
-                    <connections>
-                        <outlet property="augmentedRealityView" destination="x6e-P2-mXz" id="wq1-Zp-3tB"/>
-                        <outlet property="distanceLabel" destination="Sh4-Js-0ym" id="s2h-UM-f1m"/>
-                        <outlet property="distanceSlider" destination="ocw-bf-7dr" id="frk-lq-dAs"/>
-                        <outlet property="stdMapView" destination="azJ-A0-181" id="ACi-ed-IU2"/>
-                    </connections>
-                </customObject>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="7Ep-61-NRg" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
+            <point key="canvasLocation" x="1285" y="181"/>
         </scene>
     </scenes>
     <classes>
@@ -66,17 +75,14 @@
             <source key="sourceIdentifier" type="project" relativePath="./Classes/DCAugmentedRealityViewController.h"/>
             <relationships>
                 <relationship kind="action" name="distanceSliderValueChanged:" candidateClass="UISlider"/>
-                <relationship kind="outlet" name="augmentedRealityView" candidateClass="UIView"/>
                 <relationship kind="outlet" name="distanceLabel" candidateClass="UILabel"/>
                 <relationship kind="outlet" name="distanceSlider" candidateClass="UISlider"/>
+                <relationship kind="outlet" name="previewView" candidateClass="UIView"/>
                 <relationship kind="outlet" name="stdMapView" candidateClass="MKMapView"/>
             </relationships>
         </class>
         <class className="DCViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/DCViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="arController" candidateClass="DCAugmentedRealityViewController"/>
-            </relationships>
         </class>
     </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">

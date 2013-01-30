@@ -16,7 +16,8 @@
 #define ACCELERATION_FILTER 0.2
 #define Z_ACCELERATION_THRESHOLD 0.7
 #define AR_MAP_PERCENTAGE_SCREEN 0.4
-#define AR_MAP_INSET 10.0
+#define AR_MAP_HORIZONTAL_INSET 10.0
+#define AR_MAP_VERTICAL_INSET 30.0
 #define ONE_MILE_IN_METERS 1609.3440006146
 #define ONE_METER_IN_MILES 0.000621371192237334
 #define NUMBER_DIMENSIONS 2
@@ -28,6 +29,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     IBOutlet MKMapView *stdMapView;
     IBOutlet UISlider *distanceSlider;
     IBOutlet UILabel *distanceLabel;
+    IBOutlet UIView *previewView;
     
     NSOperationQueue *motionQueue;
     UIAccelerationValue zAcceleration;
@@ -94,6 +96,33 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     [notificationCenter removeObserver:self
                                   name:UIApplicationWillEnterForegroundNotification
                                 object:nil];
+}
+
+- (BOOL)shouldAutorotate {
+    return YES;
+}
+
+- (NSUInteger)supportedInterfaceOrientations {
+    return UIInterfaceOrientationMaskAll;
+}
+
+- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
+    if ((_visualizationMode == VisualizationModeAugmentedReality) && _videoPreviewLayer) {
+        [UIView animateWithDuration:duration
+                         animations:^{
+                             _videoPreviewLayer.frame = previewView.bounds;
+                         } completion:^(BOOL finished) {
+                             if (finished) {
+                                 _videoPreviewLayer.connection.videoOrientation = toInterfaceOrientation;
+                             }
+                         }];
+    }
+}
+
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
+    if (_visualizationMode == VisualizationModeAugmentedReality && _videoPreviewLayer) {
+        _videoPreviewLayer.connection.videoOrientation = [[UIDevice currentDevice] orientation];
+    }
 }
 
 #pragma mark Accessors
@@ -182,29 +211,29 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     if (_videoPreviewLayer) {
         return _videoPreviewLayer;
     }
-    
-	_videoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.captureSession];
-	[_videoPreviewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
-    CGRect frame = self.augmentedRealityView.bounds;
-	[_videoPreviewLayer setFrame:frame];
+
+    _videoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.captureSession];
+    [_videoPreviewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
+    CGRect frame = previewView.bounds;
+    [_videoPreviewLayer setFrame:frame];
     
     CGFloat rotationAngle;
-	switch ([[UIDevice currentDevice] orientation]) {
-		case UIDeviceOrientationLandscapeLeft:
-			rotationAngle = -M_PI_2;
-			break;
+    switch ([[UIDevice currentDevice] orientation]) {
+        case UIDeviceOrientationLandscapeLeft:
+            rotationAngle = -M_PI_2;
+            break;
             
-		case UIDeviceOrientationLandscapeRight:
-			rotationAngle = M_PI_2;
-			break;
+        case UIDeviceOrientationLandscapeRight:
+            rotationAngle = M_PI_2;
+            break;
             
-		default:
-			rotationAngle = -M_PI_2;
-			break;
-	}
+        default:
+            rotationAngle = -M_PI_2;
+            break;
+    }
 
-    [self.augmentedRealityView setTransform:CGAffineTransformMakeRotation(rotationAngle)];
-	
+    _videoPreviewLayer.connection.videoOrientation = [[UIDevice currentDevice] orientation];
+    
     return _videoPreviewLayer;
 }
 
@@ -214,7 +243,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     UIDevice *device = [UIDevice currentDevice];
     CGRect mapFrame;
 
-    CGRect arFrame = self.augmentedRealityView.bounds;
+    CGRect arFrame = self.view.bounds;
     
     switch (_visualizationMode) {
         case VisualizationModeAugmentedReality: {
@@ -232,8 +261,8 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
             mapFrame.size = CGSizeMake(arFrame.size.width * AR_MAP_PERCENTAGE_SCREEN,
                                        arFrame.size.height * AR_MAP_PERCENTAGE_SCREEN);
             
-            mapFrame.origin = CGPointMake(arFrame.size.width - mapFrame.size.width - AR_MAP_INSET,
-                                          arFrame.size.height - mapFrame.size.height - AR_MAP_INSET);
+            mapFrame.origin = CGPointMake(arFrame.size.width - mapFrame.size.width - AR_MAP_HORIZONTAL_INSET,
+                                          arFrame.size.height - mapFrame.size.height - distanceSlider.frame.size.height - AR_MAP_VERTICAL_INSET);
         }
             break;
             
@@ -348,21 +377,21 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (void)overlayAugmentedRealityAnnotations {
-//    CGRect frame = CGRectMake(stdMapView.userLocation.heading.trueHeading, 100, 300, 50);
-//
-//    if (!annotationLabel) {
-//        annotationLabel = [[UILabel alloc] initWithFrame:frame];
-//        annotationLabel.backgroundColor = [UIColor yellowColor];
-//        annotationLabel.textColor = [UIColor whiteColor];
-//        annotationLabel.shadowColor = [UIColor blackColor];
-//        annotationLabel.shadowOffset = CGSizeMake(1, 1);
-//        annotationLabel.alpha = 0.5;
-//        annotationLabel.text = @"AR Annotation";
-//        annotationLabel.textAlignment = UITextAlignmentCenter;
-//        [_imagePickerController.view addSubview:annotationLabel];
-//    }
-//    
-//    annotationLabel.frame = frame;
+    CGRect frame = CGRectMake(stdMapView.userLocation.heading.trueHeading, 100, 300, 50);
+
+    if (!annotationLabel) {
+        annotationLabel = [[UILabel alloc] initWithFrame:frame];
+        annotationLabel.backgroundColor = [UIColor yellowColor];
+        annotationLabel.textColor = [UIColor whiteColor];
+        annotationLabel.shadowColor = [UIColor blackColor];
+        annotationLabel.shadowOffset = CGSizeMake(1, 1);
+        annotationLabel.alpha = 0.5;
+        annotationLabel.text = @"AR Annotation";
+        annotationLabel.textAlignment = UITextAlignmentCenter;
+        [self.view addSubview:annotationLabel];
+    }
+    
+    annotationLabel.frame = frame;
 }
 
 - (void)addAnnotationsToMap {
@@ -431,8 +460,8 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (void)startAugmentedReality {
-	[self.augmentedRealityView.layer setBackgroundColor:[UIColor blackColor].CGColor];
-	[self.augmentedRealityView.layer addSublayer:self.videoPreviewLayer];
+	[previewView.layer setBackgroundColor:[UIColor blackColor].CGColor];
+	[previewView.layer addSublayer:self.videoPreviewLayer];
 	
     [self.captureSession startRunning];
     
