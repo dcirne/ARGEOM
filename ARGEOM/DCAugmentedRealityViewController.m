@@ -19,6 +19,7 @@
 #define AR_MAP_HORIZONTAL_INSET 10.0
 #define AR_MAP_VERTICAL_INSET 30.0
 #define ONE_MILE_IN_METERS 1609.3440006146
+#define HALF_MILE_IN_METERS 804.6720003073
 #define ONE_METER_IN_MILES 0.000621371192237334
 #define NUMBER_DIMENSIONS 2
 #define EARTH_RADIUS 3956.547
@@ -44,11 +45,9 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     double piOver180;
     double milesPerDegreeOfLatitude;
     double milesPerDegreeOfLongigute;
-    BOOL isObservingOrientationChange;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
-@property (nonatomic, strong) NSArray *placemarks;
 @property (nonatomic, strong) AVCaptureSession *captureSession;
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer *videoPreviewLayer;
 
@@ -69,7 +68,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     piOver180  = M_PI / 180.0;
     milesPerDegreeOfLatitude = 2 * M_PI * EARTH_RADIUS / 360.0;
     milesPerDegreeOfLongigute = milesPerDegreeOfLatitude; // Initialization only
-    isObservingOrientationChange = NO;
 
     motionQueue = [[NSOperationQueue alloc] init];
     
@@ -107,13 +105,15 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
+    [self layoutScreen];
+    
     if ((_visualizationMode == VisualizationModeAugmentedReality) && _videoPreviewLayer) {
         [UIView animateWithDuration:duration
                          animations:^{
                              _videoPreviewLayer.frame = previewView.bounds;
                          } completion:^(BOOL finished) {
                              if (finished) {
-                                 _videoPreviewLayer.connection.videoOrientation = toInterfaceOrientation;
+                                 [_videoPreviewLayer.connection setVideoOrientation:toInterfaceOrientation];
                              }
                          }];
     }
@@ -121,7 +121,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
     if (_visualizationMode == VisualizationModeAugmentedReality && _videoPreviewLayer) {
-        _videoPreviewLayer.connection.videoOrientation = [[UIDevice currentDevice] orientation];
+        [_videoPreviewLayer.connection setVideoOrientation:[UIDevice currentDevice].orientation];
     }
 }
 
@@ -136,54 +136,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     }
     
     return _motionManager;
-}
-
-- (NSArray *)placemarks {
-    if (_placemarks) {
-        return _placemarks;
-    }
-    
-    NSMutableArray *placemarks = [[NSMutableArray alloc] initWithCapacity:5];
-    
-    DCPlacemark *placemark;
-    
-    // Placemark 1
-    placemark = [[DCPlacemark alloc] init];
-    placemark.title = @"New York City";
-    placemark.subtitle = @"The Big Apple";
-    placemark.coordinate = CLLocationCoordinate2DMake(40.7833, -73.9667);
-    [placemarks addObject:placemark];
-    
-    // Placemark 2
-    placemark = [[DCPlacemark alloc] init];
-    placemark.title = @"White Plains";
-    placemark.subtitle = @"Large City in Westchester County";
-    placemark.coordinate = CLLocationCoordinate2DMake(41.0667, -73.7);
-    [placemarks addObject:placemark];
-    
-    // Placemark 3
-    placemark = [[DCPlacemark alloc] init];
-    placemark.title = @"Albany";
-    placemark.subtitle = @"State Capital";
-    placemark.coordinate = CLLocationCoordinate2DMake(42.75, -73.8);
-    [placemarks addObject:placemark];
-    
-    // Placemark 4
-    placemark = [[DCPlacemark alloc] init];
-    placemark.title = @"Point 4";
-    placemark.subtitle = @"";
-    placemark.coordinate = CLLocationCoordinate2DMake(44, -72);
-    [placemarks addObject:placemark];
-    
-    // Placemark 5
-    placemark = [[DCPlacemark alloc] init];
-    placemark.title = @"Point 5";
-    placemark.subtitle = @"";
-    placemark.coordinate = CLLocationCoordinate2DMake(42, -74.5);
-    [placemarks addObject:placemark];
-    
-    _placemarks = [placemarks copy];
-    return _placemarks;
 }
 
 - (AVCaptureSession *)captureSession {
@@ -214,68 +166,38 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 
     _videoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:self.captureSession];
     [_videoPreviewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
-    CGRect frame = previewView.bounds;
-    [_videoPreviewLayer setFrame:frame];
-    
-    CGFloat rotationAngle;
-    switch ([[UIDevice currentDevice] orientation]) {
-        case UIDeviceOrientationLandscapeLeft:
-            rotationAngle = -M_PI_2;
-            break;
-            
-        case UIDeviceOrientationLandscapeRight:
-            rotationAngle = M_PI_2;
-            break;
-            
-        default:
-            rotationAngle = -M_PI_2;
-            break;
-    }
-
-    _videoPreviewLayer.connection.videoOrientation = [[UIDevice currentDevice] orientation];
+    [_videoPreviewLayer setFrame:previewView.bounds];
+    [_videoPreviewLayer.connection setVideoOrientation:[UIDevice currentDevice].orientation];
     
     return _videoPreviewLayer;
 }
 
 #pragma mark Private methods
 - (void)layoutScreen {
-    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     UIDevice *device = [UIDevice currentDevice];
-    CGRect mapFrame;
-
     CGRect arFrame = self.view.bounds;
+    CGRect mapFrame;
+    CGFloat mapAlpha;
     
     switch (_visualizationMode) {
         case VisualizationModeAugmentedReality: {
             [device beginGeneratingDeviceOrientationNotifications];
-            
-            if (!isObservingOrientationChange) {
-                isObservingOrientationChange = YES;
-                
-                [notificationCenter addObserver:self
-                                       selector:@selector(handleDeviceDidRotate:)
-                                           name:UIDeviceOrientationDidChangeNotification
-                                         object:nil];
-            }
             
             mapFrame.size = CGSizeMake(arFrame.size.width * AR_MAP_PERCENTAGE_SCREEN,
                                        arFrame.size.height * AR_MAP_PERCENTAGE_SCREEN);
             
             mapFrame.origin = CGPointMake(arFrame.size.width - mapFrame.size.width - AR_MAP_HORIZONTAL_INSET,
                                           arFrame.size.height - mapFrame.size.height - distanceSlider.frame.size.height - AR_MAP_VERTICAL_INSET);
+            
+            mapAlpha = 0.6;
         }
             break;
             
         case VisualizationModeMap: {
             [device endGeneratingDeviceOrientationNotifications];
             
-            if (isObservingOrientationChange) {
-                isObservingOrientationChange = NO;
-                
-                [notificationCenter removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
-            }
-            
             mapFrame = arFrame;
+            mapAlpha = 1.0;
         }
             break;
             
@@ -287,6 +209,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     [UIView animateWithDuration:[UIApplication sharedApplication].statusBarOrientationAnimationDuration
                      animations:^{
                          stdMapView.frame = mapFrame;
+                         stdMapView.alpha = mapAlpha;
                      }];
 }
 
@@ -388,7 +311,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         annotationLabel.alpha = 0.5;
         annotationLabel.text = @"AR Annotation";
         annotationLabel.textAlignment = UITextAlignmentCenter;
-        [self.view addSubview:annotationLabel];
+        [previewView addSubview:annotationLabel];
     }
     
     annotationLabel.frame = frame;
@@ -444,7 +367,9 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (void)updateMapVisibleRegion {
-    MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(stdMapView.userLocation.location.coordinate, distance, distance);
+    CLLocationDistance regionDistance = _visualizationMode == VisualizationModeAugmentedReality ? HALF_MILE_IN_METERS : distance;
+    MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(stdMapView.userLocation.location.coordinate, regionDistance, regionDistance);
+    
     [stdMapView setRegion:[stdMapView regionThatFits:region]
                  animated:YES];
 }
@@ -542,10 +467,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     });
 }
 
-- (void)handleDeviceDidRotate:(NSNotification *)notification {
-    [self layoutScreen];
-}
-
 #pragma mark MKMapViewDelegate
 - (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation {
 //    if (mapView == self.mapView) {
@@ -556,42 +477,34 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 }
 
 - (void)mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation {
-    switch (_visualizationMode) {
-        case VisualizationModeAugmentedReality: {
-            if (mapView.userTrackingMode != MKUserTrackingModeFollowWithHeading) {
-                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC);
-                dispatch_after(popTime, dispatch_get_main_queue(), ^{
-                    if ([CLLocationManager headingAvailable]) {
-                        [mapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
-                    } else {
-                        [mapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
-                    }
-                });
-                
-                return;
-            }
-            
-            if (![CLLocationManager headingAvailable]) {
-                return;
-            }
-            
-            [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
-                if (visiblePlacemarks) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [self overlayAugmentedRealityAnnotations];
-                    });
+    if (_visualizationMode == VisualizationModeAugmentedReality) {
+        if (mapView.userTrackingMode != MKUserTrackingModeFollowWithHeading) {
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^{
+                if ([CLLocationManager headingAvailable]) {
+                    [mapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
+                } else {
+                    [mapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
                 }
-            }];
+            });
+            
+            return;
         }
-            break;
-            
-        case VisualizationModeMap:
-            [self updateMapVisibleRegion];
-            break;
-            
-        default:
-            break;
+        
+        if (![CLLocationManager headingAvailable]) {
+            return;
+        }
+        
+        [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
+            if (visiblePlacemarks) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self overlayAugmentedRealityAnnotations];
+                });
+            }
+        }];
     }
+    
+    [self updateMapVisibleRegion];
 }
 
 @end
