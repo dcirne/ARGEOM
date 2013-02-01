@@ -273,7 +273,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         int i = 0;
         double l = [UIScreen mainScreen].bounds.size.height;
         for (DCPlacemark *placemark in self.placemarks) {
-            pointP = CGPointMake(placemark.coordinate.longitude, placemark.coordinate.latitude);
+            pointP = CGPointMake(placemark.coordinates.longitude, placemark.coordinates.latitude);
             vectorAP[0] = pointP.x - pointA.x;
             vectorAP[1] = pointP.y - pointA.y;
 
@@ -286,6 +286,8 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
                 dPrime = l * norm(vectorAP) * sin(theta) / norm(vectorBC);
                 //NSLog(@"dPrime: %.4f", dPrime);
                 NSLog(@"%d - %@", i, @"Visible");
+                
+                [placemark calculateDistanceFromObserver:userLocation.location.coordinate];
                 [visiblePlacemarks addObject:placemark];
             } else {
                 [nonVisiblePlacemarks addObject:placemark];
@@ -496,10 +498,14 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         }
         
         [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
-            if (visiblePlacemarks) {
+            if (visiblePlacemarks.count > 0) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [self overlayAugmentedRealityAnnotations];
                 });
+            }
+            
+            if (nonVisiblePlacemarks.count > 0) {
+                
             }
         }];
     }

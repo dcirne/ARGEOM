@@ -13,6 +13,9 @@
 
 @property (nonatomic, strong) NSString *title;
 @property (nonatomic, strong) NSString *subtitle;
-@property (nonatomic, unsafe_unretained) CLLocationCoordinate2D coordinate;
+@property (nonatomic, unsafe_unretained) CLLocationCoordinate2D coordinates;
+@property (nonatomic, readonly, getter = distanceFromObserver) CLLocationDistance distanceFromObserver;
+
+- (void)calculateDistanceFromObserver:(CLLocationCoordinate2D)observerCoordinates;
 
 @end
