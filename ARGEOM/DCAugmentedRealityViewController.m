@@ -12,6 +12,7 @@
 #import "DCPlacemark.h"
 #import <CoreLocation/CoreLocation.h>
 #import <AVFoundation/AVFoundation.h>
+#import "DCAugmentedRealityAnnotationViewController.h"
 
 #define ACCELERATION_FILTER 0.2
 #define Z_ACCELERATION_THRESHOLD 0.7
@@ -45,6 +46,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     double piOver180;
     double milesPerDegreeOfLatitude;
     double milesPerDegreeOfLongigute;
+    NSMutableArray *augmentedRealityAnnotations;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
@@ -64,6 +66,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     phi = M_PI / 3.0;
     radius = 50.0;
     annotations = nil;
+    augmentedRealityAnnotations = nil;
     initialized = NO;
     piOver180  = M_PI / 180.0;
     milesPerDegreeOfLatitude = 2 * M_PI * EARTH_RADIUS / 360.0;
@@ -273,7 +276,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         int i = 0;
         double l = self.view.bounds.size.width;
         for (DCPlacemark *placemark in self.placemarks) {
-            pointP = CGPointMake(placemark.coordinates.longitude, placemark.coordinates.latitude);
+            pointP = CGPointMake(placemark.coordinate.longitude, placemark.coordinate.latitude);
             vectorAP[0] = pointP.x - pointA.x;
             vectorAP[1] = pointP.y - pointA.y;
 
@@ -317,6 +320,47 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     }
     
     annotationLabel.frame = frame;
+}
+
+- (void)overlayAugmentedRealityPlacemarks:(NSArray *)visiblePlacemarks nonVisiblePlacemarks:(NSArray *)nonVisiblePlacemarks {
+    DCPlacemark *placemark;
+    NSString *predicateFormat = @"placemark == %@";
+    NSPredicate *predicate;
+    DCAugmentedRealityAnnotationViewController *augmentedRealityAnnotationController;
+    
+    if (!augmentedRealityAnnotations) {
+        augmentedRealityAnnotations = [[NSMutableArray alloc] initWithCapacity:1];
+    }
+    
+    for (placemark in nonVisiblePlacemarks) {
+        predicate = [NSPredicate predicateWithFormat:predicateFormat, placemark];
+        augmentedRealityAnnotationController = [[augmentedRealityAnnotations filteredArrayUsingPredicate:predicate] lastObject];
+        
+        if (augmentedRealityAnnotationController) {
+            [augmentedRealityAnnotations removeObject:augmentedRealityAnnotationController];
+            [augmentedRealityAnnotationController.view removeFromSuperview];
+            augmentedRealityAnnotationController = nil;
+        }
+    }
+    
+    NSDictionary *bundleInfoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *storyboardName = bundleInfoDictionary[@"UIMainStoryboardFile"];
+    UIStoryboard *storyBoard = [UIStoryboard storyboardWithName:storyboardName bundle:[NSBundle bundleForClass:[self class]]];
+    CGRect frame;
+    for (placemark in visiblePlacemarks) {
+        predicate = [NSPredicate predicateWithFormat:predicateFormat, placemark];
+        augmentedRealityAnnotationController = [[augmentedRealityAnnotations filteredArrayUsingPredicate:predicate] lastObject];
+        
+        if (!augmentedRealityAnnotationController) {
+            augmentedRealityAnnotationController = [storyBoard instantiateViewControllerWithIdentifier:@"DCAugmentedRealityAnnotationViewController"];
+            [augmentedRealityAnnotations addObject:augmentedRealityAnnotationController];
+            [previewView addSubview:augmentedRealityAnnotationController.view];
+            augmentedRealityAnnotationController.placemark = placemark;
+        }
+        
+        frame = CGRectMake(stdMapView.userLocation.heading.trueHeading, 100, 140, 44);
+        augmentedRealityAnnotationController.view.frame = frame;
+    }
 }
 
 - (void)addAnnotationsToMap {
@@ -498,15 +542,9 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         }
         
         [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
-            if (visiblePlacemarks.count > 0) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self overlayAugmentedRealityAnnotations];
-                });
-            }
-            
-            if (nonVisiblePlacemarks.count > 0) {
-                
-            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self overlayAugmentedRealityPlacemarks:visiblePlacemarks nonVisiblePlacemarks:nonVisiblePlacemarks];
+            });
         }];
     }
     

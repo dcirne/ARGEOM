@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		C90F307F16B5D10000F6C158 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C90F307E16B5D10000F6C158 /* CoreMedia.framework */; };
 		C90F308A16B5D64C00F6C158 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C90F308916B5D64C00F6C158 /* AVFoundation.framework */; };
-		C92F247716BC6BED0022CC2D /* DCAnnotationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C92F247616BC6BED0022CC2D /* DCAnnotationViewController.m */; };
+		C92F247716BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C92F247616BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m */; };
 		C952CA321651A1EF00DD752E /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C952CA311651A1EF00DD752E /* CoreMotion.framework */; };
 		C98CDF7C164D697A00395BC4 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C98CDF7B164D697A00395BC4 /* UIKit.framework */; };
 		C98CDF7E164D697A00395BC4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C98CDF7D164D697A00395BC4 /* Foundation.framework */; };
@@ -32,8 +32,8 @@
 /* Begin PBXFileReference section */
 		C90F307E16B5D10000F6C158 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		C90F308916B5D64C00F6C158 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
-		C92F247516BC6BEC0022CC2D /* DCAnnotationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DCAnnotationViewController.h; sourceTree = "<group>"; };
-		C92F247616BC6BED0022CC2D /* DCAnnotationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DCAnnotationViewController.m; sourceTree = "<group>"; };
+		C92F247516BC6BEC0022CC2D /* DCAugmentedRealityAnnotationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DCAugmentedRealityAnnotationViewController.h; sourceTree = "<group>"; };
+		C92F247616BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DCAugmentedRealityAnnotationViewController.m; sourceTree = "<group>"; };
 		C952CA311651A1EF00DD752E /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		C98CDF77164D697A00395BC4 /* ARGEOM.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ARGEOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C98CDF7B164D697A00395BC4 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -125,8 +125,8 @@
 				C98CDF9A164D697A00395BC4 /* DCViewController.m */,
 				C99B8DD01652DBBA0068C3FD /* DCPlacemark.h */,
 				C99B8DD11652DBBA0068C3FD /* DCPlacemark.m */,
-				C92F247516BC6BEC0022CC2D /* DCAnnotationViewController.h */,
-				C92F247616BC6BED0022CC2D /* DCAnnotationViewController.m */,
+				C92F247516BC6BEC0022CC2D /* DCAugmentedRealityAnnotationViewController.h */,
+				C92F247616BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m */,
 			);
 			path = ARGEOM;
 			sourceTree = "<group>";
@@ -218,7 +218,7 @@
 				C98CDF9B164D697A00395BC4 /* DCViewController.m in Sources */,
 				C98CDFB1164D710B00395BC4 /* DCAugmentedRealityViewController.m in Sources */,
 				C99B8DD21652DBBA0068C3FD /* DCPlacemark.m in Sources */,
-				C92F247716BC6BED0022CC2D /* DCAnnotationViewController.m in Sources */,
+				C92F247716BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

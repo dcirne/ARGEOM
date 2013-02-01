@@ -6,18 +6,19 @@
 //  Copyright (c) 2013 Dalmo Cirne. All rights reserved.
 //
 
-#import "DCAnnotationViewController.h"
+#import "DCAugmentedRealityAnnotationViewController.h"
 #import "DCPlacemark.h"
 #import <dispatch/dispatch.h>
 
-@interface DCAnnotationViewController()
+@interface DCAugmentedRealityAnnotationViewController()
 
 @property (nonatomic, strong) IBOutlet UILabel *annotationLabel;
+@property (nonatomic, strong) IBOutlet UIView *backgroundView;
 
 @end
 
 
-@implementation DCAnnotationViewController
+@implementation DCAugmentedRealityAnnotationViewController
 
 - (void)setPlacemark:(DCPlacemark *)placemark {
     _placemark = placemark;

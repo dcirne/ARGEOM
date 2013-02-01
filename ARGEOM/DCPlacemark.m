@@ -18,7 +18,7 @@
     
     _title = nil;
     _subtitle = nil;
-    _coordinates = CLLocationCoordinate2DMake(0, 0);
+    _coordinate = CLLocationCoordinate2DMake(0, 0);
     _distanceFromObserver = FLT_MAX;
     
     return self;
@@ -26,7 +26,7 @@
 
 - (void)calculateDistanceFromObserver:(CLLocationCoordinate2D)observerCoordinates {
     CLLocation *observerLocation = [[CLLocation alloc] initWithLatitude:observerCoordinates.latitude longitude:observerCoordinates.longitude];
-    CLLocation *placemarkLocation = [[CLLocation alloc] initWithLatitude:_coordinates.latitude longitude:_coordinates.longitude];
+    CLLocation *placemarkLocation = [[CLLocation alloc] initWithLatitude:_coordinate.latitude longitude:_coordinate.longitude];
     _distanceFromObserver = sqrt(pow([placemarkLocation distanceFromLocation:observerLocation], 2));
 }
 

@@ -10,7 +10,7 @@
 
 @class DCPlacemark;
 
-@interface DCAnnotationViewController : UIViewController
+@interface DCAugmentedRealityAnnotationViewController : UIViewController
 
 @property (nonatomic, strong) DCPlacemark *placemark;
 
