@@ -271,7 +271,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         CGPoint pointP;
         double vectorAP[NUMBER_DIMENSIONS];
         int i = 0;
-        double l = [UIScreen mainScreen].bounds.size.height;
+        double l = self.view.bounds.size.width;
         for (DCPlacemark *placemark in self.placemarks) {
             pointP = CGPointMake(placemark.coordinates.longitude, placemark.coordinates.latitude);
             vectorAP[0] = pointP.x - pointA.x;
