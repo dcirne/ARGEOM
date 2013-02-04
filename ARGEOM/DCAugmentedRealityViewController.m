@@ -37,16 +37,15 @@ static double piOver180;
     IBOutlet UIView *previewView;
     
     NSOperationQueue *motionQueue;
+    dispatch_queue_t placemarksQueue;
     UIAccelerationValue zAcceleration;
     double radius;
-    dispatch_queue_t placemarksQueue;
-    NSMutableArray *annotations;
-    BOOL initialized;
-    CLLocationDistance distance;
-    UIInterfaceOrientation previousInterfaceOrientation;
     double milesPerDegreeOfLatitude;
     double milesPerDegreeOfLongigute;
+    NSMutableArray *annotations;
     NSMutableArray *augmentedRealityAnnotations;
+    BOOL initialized;
+    CLLocationDistance distance;
     CGFloat maxHeight;
     CGFloat maxY;
     CGFloat minY;
@@ -530,14 +529,11 @@ static double piOver180;
 - (void)mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation {
     if (_visualizationMode == VisualizationModeAugmentedReality) {
         if (mapView.userTrackingMode != MKUserTrackingModeFollowWithHeading) {
-            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 0.2 * NSEC_PER_SEC);
-            dispatch_after(popTime, dispatch_get_main_queue(), ^{
-                if ([CLLocationManager headingAvailable]) {
-                    [mapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
-                } else {
-                    [mapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
-                }
-            });
+            if ([CLLocationManager headingAvailable]) {
+                [mapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
+            } else {
+                [mapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
+            }
             
             return;
         }
