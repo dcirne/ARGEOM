@@ -35,14 +35,12 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     
     NSOperationQueue *motionQueue;
     UIAccelerationValue zAcceleration;
-    double phi;
     double radius;
     dispatch_queue_t placemarksQueue;
     NSMutableArray *annotations;
     BOOL initialized;
     CLLocationDistance distance;
     UIInterfaceOrientation previousInterfaceOrientation;
-    UILabel *annotationLabel;
     double piOver180;
     double milesPerDegreeOfLatitude;
     double milesPerDegreeOfLongigute;
@@ -63,7 +61,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 - (void)awakeFromNib {
     _visualizationMode = VisualizationModeUnknown;
     zAcceleration = FLT_MAX;
-    phi = M_PI / 3.0;
     radius = 50.0;
     annotations = nil;
     augmentedRealityAnnotations = nil;
@@ -244,6 +241,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         
         double alpha = userLocation.heading.trueHeading * piOver180;
         double psi = M_PI / 2.0 - alpha;
+        double phi = UIInterfaceOrientationIsLandscape([UIDevice currentDevice].orientation) ? M_PI / 3.0 : M_PI / 4.0;
         double longitudeRadiusInDegrees = radius / milesPerDegreeOfLongigute;
         double latitudeRadiusInDegrees = radius / milesPerDegreeOfLatitude;
         
@@ -302,24 +300,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         
         completionBlock([visiblePlacemarks copy], [nonVisiblePlacemarks copy]);
     });
-}
-
-- (void)overlayAugmentedRealityAnnotations {
-    CGRect frame = CGRectMake(stdMapView.userLocation.heading.trueHeading, 100, 300, 50);
-
-    if (!annotationLabel) {
-        annotationLabel = [[UILabel alloc] initWithFrame:frame];
-        annotationLabel.backgroundColor = [UIColor yellowColor];
-        annotationLabel.textColor = [UIColor whiteColor];
-        annotationLabel.shadowColor = [UIColor blackColor];
-        annotationLabel.shadowOffset = CGSizeMake(1, 1);
-        annotationLabel.alpha = 0.5;
-        annotationLabel.text = @"AR Annotation";
-        annotationLabel.textAlignment = UITextAlignmentCenter;
-        [previewView addSubview:annotationLabel];
-    }
-    
-    annotationLabel.frame = frame;
 }
 
 - (void)overlayAugmentedRealityPlacemarks:(NSArray *)visiblePlacemarks nonVisiblePlacemarks:(NSArray *)nonVisiblePlacemarks {
