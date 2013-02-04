@@ -24,6 +24,27 @@
     return self;
 }
 
+#pragma mark NSCopying
+- (id)copyWithZone:(NSZone *)zone {
+    id copyObject = [[[self class] alloc] init];
+    
+    if (copyObject) {
+        [copyObject setTitle:[_title copyWithZone:zone]];
+        [copyObject setSubtitle:[_subtitle copyWithZone:zone]];
+        [copyObject setCoordinate:_coordinate];
+        [copyObject setDistanceFromObserver:_distanceFromObserver];
+        [copyObject setFrame:_frame];
+    }
+    
+    return copyObject;
+}
+
+#pragma mark Accessors
+- (void)setDistanceFromObserver:(CLLocationDistance)distanceFromObserver {
+    _distanceFromObserver = distanceFromObserver;
+}
+
+#pragma mark Public methods
 - (CLLocationDistance)calculateDistanceFromObserver:(CLLocationCoordinate2D)observerCoordinates {
     CLLocation *observerLocation = [[CLLocation alloc] initWithLatitude:observerCoordinates.latitude longitude:observerCoordinates.longitude];
     CLLocation *placemarkLocation = [[CLLocation alloc] initWithLatitude:_coordinate.latitude longitude:_coordinate.longitude];

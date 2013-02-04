@@ -331,11 +331,13 @@ static double piOver180;
             ++i;
         }
         
-        completionBlock([visiblePlacemarks copy], [nonVisiblePlacemarks copy]);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completionBlock([visiblePlacemarks copy], [nonVisiblePlacemarks copy]);
+        });
     });
 }
 
-- (void)overlayAugmentedRealityPlacemarks:(NSArray *)visiblePlacemarks nonVisiblePlacemarks:(NSArray *)nonVisiblePlacemarks {
+- (void)overlayAugmentedRealityPlacemarks:(NSArray *const)visiblePlacemarks nonVisiblePlacemarks:(NSArray *const)nonVisiblePlacemarks {
     DCPlacemark *placemark;
     NSString *predicateFormat = @"placemark == %@";
     NSPredicate *predicate;
@@ -525,14 +527,6 @@ static double piOver180;
 }
 
 #pragma mark MKMapViewDelegate
-- (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation {
-//    if (mapView == self.mapView) {
-//        return [self.kmlParser mapView:mapView viewForAnnotation:annotation];
-//    }
-    
-    return nil;
-}
-
 - (void)mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation {
     if (_visualizationMode == VisualizationModeAugmentedReality) {
         if (mapView.userTrackingMode != MKUserTrackingModeFollowWithHeading) {
@@ -553,9 +547,7 @@ static double piOver180;
         }
         
         [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self overlayAugmentedRealityPlacemarks:visiblePlacemarks nonVisiblePlacemarks:nonVisiblePlacemarks];
-            });
+            [self overlayAugmentedRealityPlacemarks:visiblePlacemarks nonVisiblePlacemarks:nonVisiblePlacemarks];
         }];
     }
     
