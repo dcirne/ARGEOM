@@ -27,6 +27,9 @@
 
 typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks);
 
+static CGSize defaultAugmentedRealityAnnotationSize;
+static double piOver180;
+
 @interface DCAugmentedRealityViewController() <MKMapViewDelegate> {
     IBOutlet MKMapView *stdMapView;
     IBOutlet UISlider *distanceSlider;
@@ -41,10 +44,12 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     BOOL initialized;
     CLLocationDistance distance;
     UIInterfaceOrientation previousInterfaceOrientation;
-    double piOver180;
     double milesPerDegreeOfLatitude;
     double milesPerDegreeOfLongigute;
     NSMutableArray *augmentedRealityAnnotations;
+    CGFloat maxHeight;
+    CGFloat maxY;
+    CGFloat minY;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
@@ -58,6 +63,16 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 
 @synthesize visualizationMode = _visualizationMode;
 
++ (void)initialize {
+    if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+        defaultAugmentedRealityAnnotationSize = CGSizeMake(400.0f, 88.0f);
+    } else {
+        defaultAugmentedRealityAnnotationSize = CGSizeMake(200.0f, 44.0f);
+    }
+    
+    piOver180  = M_PI / 180.0;
+}
+
 - (void)awakeFromNib {
     _visualizationMode = VisualizationModeUnknown;
     zAcceleration = FLT_MAX;
@@ -65,7 +80,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     annotations = nil;
     augmentedRealityAnnotations = nil;
     initialized = NO;
-    piOver180  = M_PI / 180.0;
     milesPerDegreeOfLatitude = 2 * M_PI * EARTH_RADIUS / 360.0;
     milesPerDegreeOfLongigute = milesPerDegreeOfLatitude; // Initialization only
 
@@ -189,6 +203,10 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
             mapFrame.origin = CGPointMake(arFrame.size.width - mapFrame.size.width - AR_MAP_HORIZONTAL_INSET,
                                           arFrame.size.height - mapFrame.size.height - distanceSlider.frame.size.height - AR_MAP_VERTICAL_INSET);
             
+            maxHeight = mapFrame.origin.y;
+            minY = defaultAugmentedRealityAnnotationSize.height / 2.0;
+            maxY = maxHeight - minY;
+            
             mapAlpha = 0.6;
         }
             break;
@@ -268,11 +286,15 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
         NSMutableArray *visiblePlacemarks = [[NSMutableArray alloc] initWithCapacity:1];
         NSMutableArray *nonVisiblePlacemarks = [[NSMutableArray alloc] initWithCapacity:1];
         
-        double lambda, sigma, theta, dPrime;
+        double lambda, sigma, theta, dPrime, scale;
         CGPoint pointP;
         double vectorAP[NUMBER_DIMENSIONS];
         int i = 0;
         double l = self.view.bounds.size.width;
+        CLLocationDistance distanceFromObserver;
+        CGSize scaledSize;
+        CGPoint scaledOrigin;
+        CGFloat previewViewWidth = previewView.bounds.size.width;
         for (DCPlacemark *placemark in self.placemarks) {
             pointP = CGPointMake(placemark.coordinate.longitude, placemark.coordinate.latitude);
             vectorAP[0] = pointP.x - pointA.x;
@@ -280,19 +302,30 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 
             lambda = dotProduct(vectorAP, vectorAB) / pow(norm(vectorAB), 2);
             sigma = dotProduct(vectorAP, vectorAC) / pow(norm(vectorAC), 2);
-            //NSLog(@"lambda: %.4f, sigma: %.4f", lambda, sigma);
             if ((lambda > 0) && (sigma > 0) && (pow(lambda, 2) + pow(sigma, 2) <= 1)) {
                 theta = acos(dotProduct(vectorAM, vectorAP) / (norm(vectorAM) * norm(vectorAP)));
                 
                 dPrime = l * norm(vectorAP) * sin(theta) / norm(vectorBC);
-                //NSLog(@"dPrime: %.4f", dPrime);
-                NSLog(@"%d - %@", i, @"Visible");
+                distanceFromObserver = [placemark calculateDistanceFromObserver:userLocation.location.coordinate];
+                scale = distanceFromObserver / distance;
                 
-                [placemark calculateDistanceFromObserver:userLocation.location.coordinate];
+                scaledSize = CGSizeMake(defaultAugmentedRealityAnnotationSize.width * scale,
+                                        defaultAugmentedRealityAnnotationSize.height * scale);
+                
+                scaledOrigin = CGPointMake(previewViewWidth / 2.0 + dPrime - scaledSize.width / 2.0,
+                                           maxY * scale - scaledSize.height / 2.0);
+                
+                if (scaledOrigin.y < minY) {
+                    scaledOrigin.y = minY;
+                } else if (scaledOrigin.y > maxY) {
+                    scaledOrigin.y = maxY;
+                }
+                
+                placemark.frame = CGRectMake(scaledOrigin.x, scaledOrigin.y, scaledSize.width, scaledSize.height);
+                
                 [visiblePlacemarks addObject:placemark];
             } else {
                 [nonVisiblePlacemarks addObject:placemark];
-                NSLog(@"%d - %@", i, @"Not Visible");
             }
             
             ++i;
@@ -326,7 +359,6 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
     NSDictionary *bundleInfoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *storyboardName = bundleInfoDictionary[@"UIMainStoryboardFile"];
     UIStoryboard *storyBoard = [UIStoryboard storyboardWithName:storyboardName bundle:[NSBundle bundleForClass:[self class]]];
-    CGRect frame;
     for (placemark in visiblePlacemarks) {
         predicate = [NSPredicate predicateWithFormat:predicateFormat, placemark];
         augmentedRealityAnnotationController = [[augmentedRealityAnnotations filteredArrayUsingPredicate:predicate] lastObject];
@@ -338,8 +370,7 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
             augmentedRealityAnnotationController.placemark = placemark;
         }
         
-        frame = CGRectMake(stdMapView.userLocation.heading.trueHeading, 100, 140, 44);
-        augmentedRealityAnnotationController.view.frame = frame;
+        augmentedRealityAnnotationController.view.frame = placemark.frame;
     }
 }
 
