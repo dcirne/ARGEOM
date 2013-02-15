@@ -20,6 +20,8 @@
     _subtitle = nil;
     _coordinate = CLLocationCoordinate2DMake(0, 0);
     _distanceFromObserver = FLT_MAX;
+    _bounds = CGRectZero;
+    _center = CGPointZero;
     
     return self;
 }
@@ -33,7 +35,8 @@
         [copyObject setSubtitle:[_subtitle copyWithZone:zone]];
         [copyObject setCoordinate:_coordinate];
         [copyObject setDistanceFromObserver:_distanceFromObserver];
-        [copyObject setFrame:_frame];
+        [copyObject setBounds:_bounds];
+        [copyObject setCenter:_center];
     }
     
     return copyObject;

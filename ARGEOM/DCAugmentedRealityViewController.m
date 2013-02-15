@@ -306,11 +306,9 @@ static double piOver180;
         double lambda, sigma, theta, dPrime, scale, thetaDirection;
         CGPoint pointP;
         double *vectorAP;
-        double l = self.view.bounds.size.width;
         CLLocationDistance distanceFromObserver;
-        CGSize scaledSize;
-        CGPoint scaledOrigin;
-        CGFloat previewViewWidth = previewView.bounds.size.width;
+        double l = previewView.bounds.size.width;
+        double lOver2 = l / 2.0;
         for (DCPlacemark *placemark in self.placemarks) {
             pointP = CGPointMake(placemark.coordinate.longitude, placemark.coordinate.latitude);
             makeVector(&vectorAP, pointA, pointP);
@@ -324,19 +322,8 @@ static double piOver180;
                 distanceFromObserver = [placemark calculateDistanceFromObserver:userLocation.location.coordinate];
                 scale = 1.0 - distanceFromObserver / distance;
                 
-                scaledSize = CGSizeMake(defaultAugmentedRealityAnnotationSize.width * scale,
-                                        defaultAugmentedRealityAnnotationSize.height * scale);
-                
-                scaledOrigin = CGPointMake(previewViewWidth / 2.0 + dPrime - scaledSize.width / 2.0,
-                                           maxY * scale - scaledSize.height / 2.0);
-                
-                if (scaledOrigin.y < minY) {
-                    scaledOrigin.y = minY;
-                } else if (scaledOrigin.y > maxY) {
-                    scaledOrigin.y = maxY;
-                }
-                
-                placemark.frame = CGRectMake(scaledOrigin.x, scaledOrigin.y, scaledSize.width, scaledSize.height);
+                placemark.bounds = CGRectMake(0, 0, defaultAugmentedRealityAnnotationSize.width * scale, defaultAugmentedRealityAnnotationSize.height * scale);
+                placemark.center = CGPointMake(lOver2 + dPrime, maxY * scale);
                 
                 [visiblePlacemarks addObject:placemark];
             } else {
@@ -344,6 +331,20 @@ static double piOver180;
             }
             
             free(vectorAP);
+        }
+        
+        if (visiblePlacemarks.count > 0) {
+            [visiblePlacemarks sortUsingComparator:^NSComparisonResult(DCPlacemark *placemark1, DCPlacemark *placemark2) {
+                if (placemark1.distanceFromObserver > placemark2.distanceFromObserver) {
+                    return (NSComparisonResult)NSOrderedAscending;
+                }
+                
+                if (placemark1.distanceFromObserver < placemark2.distanceFromObserver) {
+                    return (NSComparisonResult)NSOrderedDescending;
+                }
+                
+                return (NSComparisonResult)NSOrderedSame;
+            }];
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -387,7 +388,8 @@ static double piOver180;
             augmentedRealityAnnotationController.placemark = placemark;
         }
         
-        augmentedRealityAnnotationController.view.frame = placemark.frame;
+        augmentedRealityAnnotationController.view.bounds = placemark.bounds;
+        augmentedRealityAnnotationController.view.center = placemark.center;
     }
 }
 
