@@ -548,6 +548,7 @@ static double piOver180;
 
     [self.locationManager stopUpdatingHeading];
     [self.locationManager stopUpdatingLocation];
+    [self setLocationManager:nil];
 
     [self layoutScreen];
     [self updateMapVisibleRegion];
