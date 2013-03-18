@@ -61,7 +61,6 @@ static double piOver180;
     double milesPerDegreeOfLongigute;
     NSMutableArray *annotations;
     NSMutableArray *augmentedRealityAnnotations;
-    BOOL initialized;
     CLLocationDistance distance;
     CGFloat maxHeight;
     CGFloat maxY;
@@ -96,7 +95,6 @@ static double piOver180;
     radius = 150.0; // miles
     annotations = nil;
     augmentedRealityAnnotations = nil;
-    initialized = NO;
     milesPerDegreeOfLatitude = 2 * M_PI * EARTH_RADIUS / 360.0;
     milesPerDegreeOfLongigute = milesPerDegreeOfLatitude; // Initialization value only
 
@@ -216,6 +214,10 @@ static double piOver180;
     [self updateLocationManagerHeadingOrientation];
 
     return _locationManager;
+}
+
+- (void)setPlacemarks:(NSArray *)placemarks {
+    _placemarks = placemarks;
 }
 
 #pragma mark Private methods
@@ -475,15 +477,6 @@ static double piOver180;
     }
 }
 
-- (void)initialize {
-    stdMapView.showsUserLocation = YES;
-    [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
-
-    _visualizationMode = VisualizationModeMap;
-    [self distanceSliderValueChanged:distanceSlider];
-    initialized = YES;
-}
-
 - (void)updateMapVisibleRegion {
     MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(stdMapView.userLocation.location.coordinate, distance, distance);
     
@@ -587,12 +580,16 @@ static double piOver180;
 }
 
 #pragma mark Public methods
-- (void)start {
-    if (!initialized) {
-        [self initialize];
-    }
+- (void)startWithPlacemarks:(NSArray *)placemarks {
+    self.placemarks = placemarks;
     
-    if (!annotations) {
+    stdMapView.showsUserLocation = YES;
+    [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
+    
+    _visualizationMode = VisualizationModeMap;
+    [self distanceSliderValueChanged:distanceSlider];
+    
+    if (annotations == nil) {
         [self addAnnotationsToMap];
     }
     
@@ -608,11 +605,12 @@ static double piOver180;
 - (void)handleApplicationDidEnterBackground:(NSNotification *)notification {
     [self stopAugmentedReality];
     [self setCaptureSession:nil];
-    [self stop];
+    [self stopMonitoringDeviceMotion];
+    [self setMotionManager:nil];
 }
 
 - (void)handleApplicationWillEnterForeground:(NSNotification *)notification {
-    [self start];
+    [self startMonitoringDeviceMotion];
 }
 
 - (void)handleDeviceAcceleration:(CMAccelerometerData *)accelerometerData error:(NSError *)error {

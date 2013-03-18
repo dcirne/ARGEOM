@@ -47,12 +47,10 @@ typedef void(^PlacemarksLoaded)(NSArray *placemarks);
         UIStoryboard *storyBoard = [UIStoryboard storyboardWithName:storyboardName bundle:[NSBundle bundleForClass:[self class]]];
         [self setArController:[storyBoard instantiateViewControllerWithIdentifier:@"DCAugmentedRealityViewController"]];
         
-        [self.arController setPlacemarks:placemarks];
-        
         [self presentViewController:self.arController
                            animated:NO
                          completion:^{
-                             [self.arController start];
+                             [self.arController startWithPlacemarks:placemarks];
                          }];
     }];
 #else
@@ -63,12 +61,11 @@ typedef void(^PlacemarksLoaded)(NSArray *placemarks);
         [self setArController:[storyBoard instantiateViewControllerWithIdentifier:@"DCAugmentedRealityViewController"]];
         
         NSArray *placemarks = [self loadPlacemarks];
-        [self.arController setPlacemarks:placemarks];
         
         [self presentViewController:self.arController
                            animated:NO
                          completion:^{
-                             [self.arController start];
+                             [self.arController startWithPlacemarks:placemarks];
                          }];
     });
 #endif
