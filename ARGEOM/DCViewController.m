@@ -27,7 +27,7 @@
 #import <dispatch/dispatch.h>
 #import "DCPlacemark.h"
 
-#define USE_AIRPORT_PLACEMARKS
+#define USE_EXTERNAL_PLACEMARKS
 
 typedef void(^PlacemarksLoaded)(NSArray *placemarks);
 
@@ -40,19 +40,17 @@ typedef void(^PlacemarksLoaded)(NSArray *placemarks);
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-#ifdef USE_AIRPORT_PLACEMARKS
+#ifdef USE_EXTERNAL_PLACEMARKS
     [self loadPlacemarks:^(NSArray *placemarks) {
         NSDictionary *bundleInfoDictionary = [[NSBundle mainBundle] infoDictionary];
         NSString *storyboardName = bundleInfoDictionary[@"UIMainStoryboardFile"];
         UIStoryboard *storyBoard = [UIStoryboard storyboardWithName:storyboardName bundle:[NSBundle bundleForClass:[self class]]];
         [self setArController:[storyBoard instantiateViewControllerWithIdentifier:@"DCAugmentedRealityViewController"]];
         
-        [self.arController setPlacemarks:placemarks];
-        
         [self presentViewController:self.arController
                            animated:NO
                          completion:^{
-                             [self.arController start];
+                             [self.arController startWithPlacemarks:placemarks];
                          }];
     }];
 #else
@@ -63,12 +61,11 @@ typedef void(^PlacemarksLoaded)(NSArray *placemarks);
         [self setArController:[storyBoard instantiateViewControllerWithIdentifier:@"DCAugmentedRealityViewController"]];
         
         NSArray *placemarks = [self loadPlacemarks];
-        [self.arController setPlacemarks:placemarks];
         
         [self presentViewController:self.arController
                            animated:NO
                          completion:^{
-                             [self.arController start];
+                             [self.arController startWithPlacemarks:placemarks];
                          }];
     });
 #endif
@@ -120,36 +117,28 @@ typedef void(^PlacemarksLoaded)(NSArray *placemarks);
 - (void)loadPlacemarks:(PlacemarksLoaded)completionBlock {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSBundle *mainBundle = [NSBundle mainBundle];
-        NSURL *placemarksURL = [mainBundle URLForResource:@"GlobalAirportDatabase" withExtension:@"txt"];
+        NSURL *placemarksURL = [mainBundle URLForResource:@"USA_Capitals" withExtension:@"csv"];
         
         NSError *error = nil;
-        NSString *airportsString = [NSString stringWithContentsOfURL:placemarksURL encoding:NSUTF8StringEncoding error:&error];
-        NSArray *airportsArray = [airportsString componentsSeparatedByString:@"\n"];
-        __block NSArray *airportArray;
-        __block NSMutableArray *placemarks = [[NSMutableArray alloc] initWithCapacity:airportsArray.count];
+        NSString *placemarksString = [NSString stringWithContentsOfURL:placemarksURL encoding:NSUTF8StringEncoding error:&error];
+        NSArray *placemarksArray = [placemarksString componentsSeparatedByString:@"\n"];
+        __block NSArray *placemarkArray;
+        __block NSMutableArray *placemarks = [[NSMutableArray alloc] initWithCapacity:placemarksArray.count];
         __block CLLocationDegrees latitude, longitude;
-        __block double latitudeDirection, longitudeDirection;
         
-        [airportsArray enumerateObjectsUsingBlock:^(NSString *airportString, NSUInteger idx, BOOL *stop) {
-            airportArray = [airportString componentsSeparatedByString:@":"];
+        [placemarksArray enumerateObjectsUsingBlock:^(NSString *placemarkString, NSUInteger idx, BOOL *stop) {
+            placemarkArray = [placemarkString componentsSeparatedByString:@","];
             
-            if (airportArray.count < 14) {
+            if (placemarkArray.count < 4) {
                 return;
             }
             
-            latitudeDirection = [airportArray[8] isEqualToString:@"N"] ? 1.0 : -1.0;
-            latitude = ([airportArray[5] doubleValue] + [airportArray[6] doubleValue] / 60.0) * latitudeDirection;
-            
-            longitudeDirection = [airportArray[12] isEqualToString:@"E"] ? 1.0 : -1.0;
-            longitude = ([airportArray[9] doubleValue] + [airportArray[10] doubleValue] / 60.0) * longitudeDirection;
-            
-            if (latitude == 0 && longitude == 0) {
-                return;
-            }
+            latitude = [placemarkArray[2] doubleValue];
+            longitude = [placemarkArray[3] doubleValue];
             
             DCPlacemark *placemark = [[DCPlacemark alloc] init];
-            placemark.title = [NSString stringWithFormat:@"%@ - %@", airportArray[1], airportArray[2]];
-            placemark.subtitle = [NSString stringWithFormat:@"%@, %@", airportArray[3], airportArray[4]];
+            placemark.title = [NSString stringWithFormat:@"%@ - %@", placemarkArray[1], placemarkArray[0]];
+            placemark.subtitle = [NSString stringWithFormat:@"Lat:%.2f, Lon:%.2f", latitude, longitude];
             placemark.coordinate = CLLocationCoordinate2DMake(latitude, longitude);
             [placemarks addObject:placemark];
         }];

@@ -33,10 +33,10 @@ typedef enum : NSInteger {
 
 @interface DCAugmentedRealityViewController : UIViewController
 
-@property (nonatomic, readonly, getter = visualizationMode) VisualizationMode visualizationMode;
-@property (nonatomic, strong) NSArray *placemarks;
+@property (nonatomic, readonly) VisualizationMode visualizationMode;
+@property (nonatomic, readonly) NSArray *placemarks;
 
-- (void)start;
+- (void)startWithPlacemarks:(NSArray *)placemarks;
 - (void)stop;
 
 @end

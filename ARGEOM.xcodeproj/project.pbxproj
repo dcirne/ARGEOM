@@ -11,8 +11,7 @@
 		C90F308A16B5D64C00F6C158 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C90F308916B5D64C00F6C158 /* AVFoundation.framework */; };
 		C92F247716BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C92F247616BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m */; };
 		C952CA321651A1EF00DD752E /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C952CA311651A1EF00DD752E /* CoreMotion.framework */; };
-		C97A992B16F117A3009F4625 /* GlobalAirportDatabase.txt in Resources */ = {isa = PBXBuildFile; fileRef = C97A992916F117A3009F4625 /* GlobalAirportDatabase.txt */; };
-		C97A992C16F117A3009F4625 /* readme.txt in Resources */ = {isa = PBXBuildFile; fileRef = C97A992A16F117A3009F4625 /* readme.txt */; };
+		C98BD2C516F3D79100EBF095 /* USA_Capitals.csv in Resources */ = {isa = PBXBuildFile; fileRef = C98BD2C416F3D79100EBF095 /* USA_Capitals.csv */; };
 		C98CDF7C164D697A00395BC4 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C98CDF7B164D697A00395BC4 /* UIKit.framework */; };
 		C98CDF7E164D697A00395BC4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C98CDF7D164D697A00395BC4 /* Foundation.framework */; };
 		C98CDF80164D697A00395BC4 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C98CDF7F164D697A00395BC4 /* CoreGraphics.framework */; };
@@ -37,8 +36,7 @@
 		C92F247516BC6BEC0022CC2D /* DCAugmentedRealityAnnotationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DCAugmentedRealityAnnotationViewController.h; sourceTree = "<group>"; };
 		C92F247616BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DCAugmentedRealityAnnotationViewController.m; sourceTree = "<group>"; };
 		C952CA311651A1EF00DD752E /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
-		C97A992916F117A3009F4625 /* GlobalAirportDatabase.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = GlobalAirportDatabase.txt; sourceTree = "<group>"; };
-		C97A992A16F117A3009F4625 /* readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = readme.txt; sourceTree = "<group>"; };
+		C98BD2C416F3D79100EBF095 /* USA_Capitals.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = USA_Capitals.csv; sourceTree = "<group>"; };
 		C98CDF77164D697A00395BC4 /* ARGEOM.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ARGEOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C98CDF7B164D697A00395BC4 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		C98CDF7D164D697A00395BC4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -83,13 +81,12 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		C97A992816F117A3009F4625 /* GlobalAirportDatabase */ = {
+		C98BD2C316F3D78000EBF095 /* Data Source */ = {
 			isa = PBXGroup;
 			children = (
-				C97A992916F117A3009F4625 /* GlobalAirportDatabase.txt */,
-				C97A992A16F117A3009F4625 /* readme.txt */,
+				C98BD2C416F3D79100EBF095 /* USA_Capitals.csv */,
 			);
-			path = GlobalAirportDatabase;
+			name = "Data Source";
 			sourceTree = "<group>";
 		};
 		C98CDF6C164D697A00395BC4 = {
@@ -127,7 +124,7 @@
 		C98CDF81164D697A00395BC4 /* ARGEOM */ = {
 			isa = PBXGroup;
 			children = (
-				C97A992816F117A3009F4625 /* GlobalAirportDatabase */,
+				C98BD2C316F3D78000EBF095 /* Data Source */,
 				C98CDF82164D697A00395BC4 /* Supporting Files */,
 				C98CDFAF164D710B00395BC4 /* DCAugmentedRealityViewController.h */,
 				C98CDFB0164D710B00395BC4 /* DCAugmentedRealityViewController.m */,
@@ -217,8 +214,7 @@
 				C98CDF92164D697A00395BC4 /* Default-568h@2x.png in Resources */,
 				C98CDF95164D697A00395BC4 /* MainStoryboard_iPhone.storyboard in Resources */,
 				C98CDF98164D697A00395BC4 /* MainStoryboard_iPad.storyboard in Resources */,
-				C97A992B16F117A3009F4625 /* GlobalAirportDatabase.txt in Resources */,
-				C97A992C16F117A3009F4625 /* readme.txt in Resources */,
+				C98BD2C516F3D79100EBF095 /* USA_Capitals.csv in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

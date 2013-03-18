@@ -40,13 +40,14 @@
 #define ONE_METER_IN_MILES 0.000621371192237334
 #define NUMBER_DIMENSIONS 2
 #define EARTH_RADIUS 3956.547
+#define MAXIMUM_DISTANCE 500.0
 
 typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks);
 
 static CGSize defaultAugmentedRealityAnnotationSize;
 static double piOver180;
 
-@interface DCAugmentedRealityViewController() <MKMapViewDelegate> {
+@interface DCAugmentedRealityViewController() <MKMapViewDelegate, CLLocationManagerDelegate> {
     IBOutlet MKMapView *stdMapView;
     IBOutlet UISlider *distanceSlider;
     IBOutlet UILabel *distanceLabel;
@@ -60,7 +61,6 @@ static double piOver180;
     double milesPerDegreeOfLongigute;
     NSMutableArray *annotations;
     NSMutableArray *augmentedRealityAnnotations;
-    BOOL initialized;
     CLLocationDistance distance;
     CGFloat maxHeight;
     CGFloat maxY;
@@ -70,6 +70,7 @@ static double piOver180;
 @property (nonatomic, strong) CMMotionManager *motionManager;
 @property (nonatomic, strong) AVCaptureSession *captureSession;
 @property (nonatomic, strong) AVCaptureVideoPreviewLayer *videoPreviewLayer;
+@property (nonatomic, strong) CLLocationManager *locationManager;
 
 @end
 
@@ -91,12 +92,11 @@ static double piOver180;
 - (void)awakeFromNib {
     _visualizationMode = VisualizationModeUnknown;
     zAcceleration = FLT_MAX;
-    radius = 50.0;
+    radius = 150.0; // miles
     annotations = nil;
     augmentedRealityAnnotations = nil;
-    initialized = NO;
     milesPerDegreeOfLatitude = 2 * M_PI * EARTH_RADIUS / 360.0;
-    milesPerDegreeOfLongigute = milesPerDegreeOfLatitude; // Initialization only
+    milesPerDegreeOfLongigute = milesPerDegreeOfLatitude; // Initialization value only
 
     motionQueue = [[NSOperationQueue alloc] init];
     
@@ -151,6 +151,7 @@ static double piOver180;
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
     if (_visualizationMode == VisualizationModeAugmentedReality && _videoPreviewLayer) {
         [_videoPreviewLayer.connection setVideoOrientation:[UIDevice currentDevice].orientation];
+        [self updateLocationManagerHeadingOrientation];
     }
 }
 
@@ -201,6 +202,24 @@ static double piOver180;
     return _videoPreviewLayer;
 }
 
+- (CLLocationManager *)locationManager {
+    if (_locationManager) {
+        return _locationManager;
+    }
+    
+    _locationManager = [[CLLocationManager alloc] init];
+    _locationManager.delegate = self;
+    _locationManager.headingFilter = kCLHeadingFilterNone;
+    _locationManager.distanceFilter = kCLDistanceFilterNone;
+    [self updateLocationManagerHeadingOrientation];
+
+    return _locationManager;
+}
+
+- (void)setPlacemarks:(NSArray *)placemarks {
+    _placemarks = placemarks;
+}
+
 #pragma mark Private methods
 - (void)layoutScreen {
     UIDevice *device = [UIDevice currentDevice];
@@ -246,7 +265,11 @@ static double piOver180;
                      }];
 }
 
-- (void)calculateVisiblePlacemarksWithUserLocation:(MKUserLocation *const)userLocation completionBlock:(PlacemarksCalculationComplete)completionBlock {
+- (void)calculateVisiblePlacemarksWithUserLocation:(CLLocation *const)location heading:(CLHeading *const)heading completionBlock:(PlacemarksCalculationComplete)completionBlock {
+    if (!location || !heading) {
+        return;
+    }
+    
     dispatch_async(placemarksQueue, ^{
         double(^dotProduct)(double *, double *) = ^(double *vector1, double *vector2) {
             double dotProduct = 0;
@@ -254,7 +277,7 @@ static double piOver180;
             for (int i = 0; i < NUMBER_DIMENSIONS; ++i) {
                 dotProduct += vector1[i] * vector2[i];
             }
-
+            
             return dotProduct;
         };
         
@@ -279,7 +302,7 @@ static double piOver180;
             ++vectorEntry;
             *vectorEntry = point2.y - point1.y;
         };
-
+        
         CLLocationDistance(^calculateDistanceBetweenPoints)(CGPoint, CGPoint) = ^(CGPoint point1, CGPoint point2) {
             CLLocation *point1Location = [[CLLocation alloc] initWithLatitude:point1.y longitude:point1.x];
             CLLocation *point2Location = [[CLLocation alloc] initWithLatitude:point2.y longitude:point2.x];
@@ -288,16 +311,21 @@ static double piOver180;
             return distanceBetweenPoints;
         };
         
-        milesPerDegreeOfLongigute = milesPerDegreeOfLatitude * cos(userLocation.location.coordinate.latitude * piOver180);
+        milesPerDegreeOfLongigute = milesPerDegreeOfLatitude * cos(location.coordinate.latitude * piOver180);
         
-        double alpha = userLocation.heading.trueHeading * piOver180;
+        CLLocationDirection trueHeading = heading.trueHeading;
+        if (trueHeading < 0) {
+            return;
+        }
+        
+        double alpha = trueHeading * piOver180;
         double psi = M_PI / 2.0 - alpha;
         double phi = UIInterfaceOrientationIsLandscape([UIDevice currentDevice].orientation) ? M_PI / 3.0 : M_PI / 4.0;
         double longitudeRadiusInDegrees = radius / milesPerDegreeOfLongigute;
         double latitudeRadiusInDegrees = radius / milesPerDegreeOfLatitude;
         
-        CGPoint pointA = CGPointMake(userLocation.location.coordinate.longitude,
-                                     userLocation.location.coordinate.latitude);
+        CGPoint pointA = CGPointMake(location.coordinate.longitude,
+                                     location.coordinate.latitude);
         
         CGPoint pointB = CGPointMake(longitudeRadiusInDegrees * cos(psi + phi / 2.0) + pointA.x,
                                      latitudeRadiusInDegrees * sin(psi + phi / 2.0) + pointA.y);
@@ -335,7 +363,7 @@ static double piOver180;
                 thetaDirection = calculateDistanceBetweenPoints(pointB, pointP) <= calculateDistanceBetweenPoints(pointC, pointP) ? -1.0 : 1.0;
                 theta = acos(dotProduct(vectorAM, vectorAP) / (norm(vectorAM) * norm(vectorAP))) * thetaDirection;
                 dPrime = l * norm(vectorAP) * sin(theta) / norm(vectorBC);
-                distanceFromObserver = [placemark calculateDistanceFromObserver:userLocation.location.coordinate];
+                distanceFromObserver = [placemark calculateDistanceFromObserver:location.coordinate];
                 scale = 1.0 - distanceFromObserver / distance;
                 
                 placemark.bounds = CGRectMake(0, 0, defaultAugmentedRealityAnnotationSize.width * scale, defaultAugmentedRealityAnnotationSize.height * scale);
@@ -449,15 +477,6 @@ static double piOver180;
     }
 }
 
-- (void)initialize {
-    stdMapView.showsUserLocation = YES;
-    [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
-
-    _visualizationMode = VisualizationModeMap;
-    [self distanceSliderValueChanged:distanceSlider];
-    initialized = YES;
-}
-
 - (void)updateMapVisibleRegion {
     MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(stdMapView.userLocation.location.coordinate, distance, distance);
     
@@ -466,7 +485,7 @@ static double piOver180;
 }
 
 - (IBAction)distanceSliderValueChanged:(UISlider *)sender {
-    radius = 100 * sender.value;
+    radius = MAXIMUM_DISTANCE * sender.value;
     distance = radius * ONE_MILE_IN_METERS;
     
     NSString *milesText = radius > 1.0 ? @"miles" : @"mile";
@@ -485,7 +504,7 @@ static double piOver180;
         [stdMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:NO];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self calculateVisiblePlacemarksWithUserLocation:stdMapView.userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
+            [self calculateVisiblePlacemarksWithUserLocation:self.locationManager.location heading:self.locationManager.heading completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
                 [self overlayAugmentedRealityPlacemarks:visiblePlacemarks nonVisiblePlacemarks:nonVisiblePlacemarks];
             }];
         });
@@ -500,6 +519,9 @@ static double piOver180;
     
     stdMapView.showsUserLocation = YES;
     [stdMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
+    
+    [self.locationManager startUpdatingLocation];
+    [self.locationManager startUpdatingHeading];
     
     [self layoutScreen];
     [self updateMapVisibleRegion];
@@ -517,17 +539,57 @@ static double piOver180;
     stdMapView.showsUserLocation = YES;
     [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
 
+    [self.locationManager stopUpdatingHeading];
+    [self.locationManager stopUpdatingLocation];
+    [self setLocationManager:nil];
+
     [self layoutScreen];
     [self updateMapVisibleRegion];
 }
 
-#pragma mark Public methods
-- (void)start {
-    if (!initialized) {
-        [self initialize];
+- (void)updateLocationManagerHeadingOrientation {
+    if (!_locationManager) {
+        return;
     }
     
-    if (!annotations) {
+    CLDeviceOrientation clDeviceOrientation;
+    
+    switch ([UIDevice currentDevice].orientation) {
+        case UIDeviceOrientationPortrait:
+            clDeviceOrientation = CLDeviceOrientationPortrait;
+            break;
+            
+        case UIDeviceOrientationPortraitUpsideDown:
+            clDeviceOrientation = CLDeviceOrientationPortraitUpsideDown;
+            break;
+            
+        case UIDeviceOrientationLandscapeLeft:
+            clDeviceOrientation = CLDeviceOrientationLandscapeLeft;
+            break;
+            
+        case UIDeviceOrientationLandscapeRight:
+            clDeviceOrientation = CLDeviceOrientationLandscapeRight;
+            break;
+            
+        default:
+            clDeviceOrientation = CLDeviceOrientationUnknown;
+            break;
+    }
+    
+    _locationManager.headingOrientation = clDeviceOrientation;
+}
+
+#pragma mark Public methods
+- (void)startWithPlacemarks:(NSArray *)placemarks {
+    self.placemarks = placemarks;
+    
+    stdMapView.showsUserLocation = YES;
+    [stdMapView setUserTrackingMode:MKUserTrackingModeFollow animated:YES];
+    
+    _visualizationMode = VisualizationModeMap;
+    [self distanceSliderValueChanged:distanceSlider];
+    
+    if (annotations == nil) {
         [self addAnnotationsToMap];
     }
     
@@ -543,11 +605,12 @@ static double piOver180;
 - (void)handleApplicationDidEnterBackground:(NSNotification *)notification {
     [self stopAugmentedReality];
     [self setCaptureSession:nil];
-    [self stop];
+    [self stopMonitoringDeviceMotion];
+    [self setMotionManager:nil];
 }
 
 - (void)handleApplicationWillEnterForeground:(NSNotification *)notification {
-    [self start];
+    [self startMonitoringDeviceMotion];
 }
 
 - (void)handleDeviceAcceleration:(CMAccelerometerData *)accelerometerData error:(NSError *)error {
@@ -578,24 +641,39 @@ static double piOver180;
     });
 }
 
-#pragma mark MKMapViewDelegate
+#pragma mark MKMapViewDelegate methods
 - (void)mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation {
     if (_visualizationMode == VisualizationModeAugmentedReality) {
         if (mapView.userTrackingMode != MKUserTrackingModeFollowWithHeading) {
             [mapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
             return;
         }
-        
-        if (![CLLocationManager headingAvailable]) {
-            return;
-        }
-        
-        [self calculateVisiblePlacemarksWithUserLocation:userLocation completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
-            [self overlayAugmentedRealityPlacemarks:visiblePlacemarks nonVisiblePlacemarks:nonVisiblePlacemarks];
-        }];
     }
     
     [self updateMapVisibleRegion];
+}
+
+#pragma mark CLLocationManagerDelegate methods
+- (void)locationManager:(CLLocationManager *)manager didUpdateHeading:(CLHeading *)newHeading {
+    if (_visualizationMode != VisualizationModeAugmentedReality) {
+        return;
+    }
+    
+    [self calculateVisiblePlacemarksWithUserLocation:manager.location heading:newHeading completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
+        [self overlayAugmentedRealityPlacemarks:visiblePlacemarks nonVisiblePlacemarks:nonVisiblePlacemarks];
+    }];
+}
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
+    if (_visualizationMode != VisualizationModeAugmentedReality) {
+        return;
+    }
+    
+    CLLocation *location = [locations lastObject];
+    
+    [self calculateVisiblePlacemarksWithUserLocation:location heading:manager.heading completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
+        [self overlayAugmentedRealityPlacemarks:visiblePlacemarks nonVisiblePlacemarks:nonVisiblePlacemarks];
+    }];
 }
 
 @end
