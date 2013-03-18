@@ -30,7 +30,7 @@
 @property (nonatomic, strong) NSString *title;
 @property (nonatomic, strong) NSString *subtitle;
 @property (nonatomic, unsafe_unretained) CLLocationCoordinate2D coordinate;
-@property (nonatomic, readonly, getter = distanceFromObserver) CLLocationDistance distanceFromObserver;
+@property (nonatomic, readonly) CLLocationDistance distanceFromObserver;
 @property (nonatomic, unsafe_unretained) CGRect bounds;
 @property (nonatomic, unsafe_unretained) CGPoint center;
 

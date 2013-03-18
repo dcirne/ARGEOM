@@ -26,6 +26,8 @@
 
 @implementation DCPlacemark
 
+@synthesize distanceFromObserver = _distanceFromObserver;
+
 - (id)init {
     self = [super init];
     if (!self) {
@@ -67,7 +69,7 @@
 - (CLLocationDistance)calculateDistanceFromObserver:(CLLocationCoordinate2D)observerCoordinates {
     CLLocation *observerLocation = [[CLLocation alloc] initWithLatitude:observerCoordinates.latitude longitude:observerCoordinates.longitude];
     CLLocation *placemarkLocation = [[CLLocation alloc] initWithLatitude:_coordinate.latitude longitude:_coordinate.longitude];
-    _distanceFromObserver = sqrt(pow([placemarkLocation distanceFromLocation:observerLocation], 2));
+    [self setDistanceFromObserver:sqrt(pow([placemarkLocation distanceFromLocation:observerLocation], 2))];
     
     return _distanceFromObserver;
 }
