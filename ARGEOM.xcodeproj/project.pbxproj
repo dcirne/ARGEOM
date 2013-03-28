@@ -9,6 +9,13 @@
 /* Begin PBXBuildFile section */
 		C90F307F16B5D10000F6C158 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C90F307E16B5D10000F6C158 /* CoreMedia.framework */; };
 		C90F308A16B5D64C00F6C158 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C90F308916B5D64C00F6C158 /* AVFoundation.framework */; };
+		C9298DDB1704E22F007FA465 /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DD41704E22F007FA465 /* Icon-72.png */; };
+		C9298DDC1704E22F007FA465 /* Icon-72@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DD51704E22F007FA465 /* Icon-72@2x.png */; };
+		C9298DDD1704E22F007FA465 /* Icon-Small-50.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DD61704E22F007FA465 /* Icon-Small-50.png */; };
+		C9298DDE1704E22F007FA465 /* Icon-Small.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DD71704E22F007FA465 /* Icon-Small.png */; };
+		C9298DDF1704E22F007FA465 /* Icon-Small@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DD81704E22F007FA465 /* Icon-Small@2x.png */; };
+		C9298DE01704E22F007FA465 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DD91704E22F007FA465 /* Icon.png */; };
+		C9298DE11704E22F007FA465 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DDA1704E22F007FA465 /* Icon@2x.png */; };
 		C92F247716BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C92F247616BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m */; };
 		C952CA321651A1EF00DD752E /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C952CA311651A1EF00DD752E /* CoreMotion.framework */; };
 		C98BD2C516F3D79100EBF095 /* USA_Capitals.csv in Resources */ = {isa = PBXBuildFile; fileRef = C98BD2C416F3D79100EBF095 /* USA_Capitals.csv */; };
@@ -33,6 +40,13 @@
 /* Begin PBXFileReference section */
 		C90F307E16B5D10000F6C158 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		C90F308916B5D64C00F6C158 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		C9298DD41704E22F007FA465 /* Icon-72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72.png"; sourceTree = SOURCE_ROOT; };
+		C9298DD51704E22F007FA465 /* Icon-72@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72@2x.png"; sourceTree = SOURCE_ROOT; };
+		C9298DD61704E22F007FA465 /* Icon-Small-50.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small-50.png"; sourceTree = SOURCE_ROOT; };
+		C9298DD71704E22F007FA465 /* Icon-Small.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small.png"; sourceTree = SOURCE_ROOT; };
+		C9298DD81704E22F007FA465 /* Icon-Small@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small@2x.png"; sourceTree = SOURCE_ROOT; };
+		C9298DD91704E22F007FA465 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = SOURCE_ROOT; };
+		C9298DDA1704E22F007FA465 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = SOURCE_ROOT; };
 		C92F247516BC6BEC0022CC2D /* DCAugmentedRealityAnnotationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DCAugmentedRealityAnnotationViewController.h; sourceTree = "<group>"; };
 		C92F247616BC6BED0022CC2D /* DCAugmentedRealityAnnotationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DCAugmentedRealityAnnotationViewController.m; sourceTree = "<group>"; };
 		C952CA311651A1EF00DD752E /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
@@ -145,6 +159,13 @@
 		C98CDF82164D697A00395BC4 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				C9298DD41704E22F007FA465 /* Icon-72.png */,
+				C9298DD51704E22F007FA465 /* Icon-72@2x.png */,
+				C9298DD61704E22F007FA465 /* Icon-Small-50.png */,
+				C9298DD71704E22F007FA465 /* Icon-Small.png */,
+				C9298DD81704E22F007FA465 /* Icon-Small@2x.png */,
+				C9298DD91704E22F007FA465 /* Icon.png */,
+				C9298DDA1704E22F007FA465 /* Icon@2x.png */,
 				C98CDF83164D697A00395BC4 /* ARGEOM-Info.plist */,
 				C98CDF84164D697A00395BC4 /* InfoPlist.strings */,
 				C98CDF87164D697A00395BC4 /* main.m */,
@@ -215,6 +236,13 @@
 				C98CDF95164D697A00395BC4 /* MainStoryboard_iPhone.storyboard in Resources */,
 				C98CDF98164D697A00395BC4 /* MainStoryboard_iPad.storyboard in Resources */,
 				C98BD2C516F3D79100EBF095 /* USA_Capitals.csv in Resources */,
+				C9298DDB1704E22F007FA465 /* Icon-72.png in Resources */,
+				C9298DDC1704E22F007FA465 /* Icon-72@2x.png in Resources */,
+				C9298DDD1704E22F007FA465 /* Icon-Small-50.png in Resources */,
+				C9298DDE1704E22F007FA465 /* Icon-Small.png in Resources */,
+				C9298DDF1704E22F007FA465 /* Icon-Small@2x.png in Resources */,
+				C9298DE01704E22F007FA465 /* Icon.png in Resources */,
+				C9298DE11704E22F007FA465 /* Icon@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
