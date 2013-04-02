@@ -63,8 +63,8 @@ static double piOver180;
     NSMutableArray *augmentedRealityAnnotations;
     CLLocationDistance distance;
     CGFloat maxHeight;
-    CGFloat maxY;
-    CGFloat minY;
+    CGFloat yMax;
+    CGFloat yMin;
 }
 
 @property (nonatomic, strong) CMMotionManager *motionManager;
@@ -243,8 +243,8 @@ static double piOver180;
                                           arFrame.size.height - mapFrame.size.height - distanceSlider.frame.size.height - AR_MAP_VERTICAL_INSET);
             
             maxHeight = mapFrame.origin.y;
-            minY = defaultAugmentedRealityAnnotationSize.height / 2.0;
-            maxY = maxHeight - minY;
+            yMin = defaultAugmentedRealityAnnotationSize.height / 2.0;
+            yMax = maxHeight - yMin;
             
             mapAlpha = 0.6;
         }
@@ -372,7 +372,7 @@ static double piOver180;
                 scale = 1.0 - distanceFromObserver / distance;
                 
                 placemark.bounds = CGRectMake(0, 0, defaultAugmentedRealityAnnotationSize.width * scale, defaultAugmentedRealityAnnotationSize.height * scale);
-                placemark.center = CGPointMake(lOver2 + dPrime, maxY * scale);
+                placemark.center = CGPointMake(lOver2 + dPrime, yMax * scale);
                 
                 [visiblePlacemarks addObject:placemark];
             } else {
