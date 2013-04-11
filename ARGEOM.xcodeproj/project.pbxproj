@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		C90F307F16B5D10000F6C158 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C90F307E16B5D10000F6C158 /* CoreMedia.framework */; };
 		C90F308A16B5D64C00F6C158 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C90F308916B5D64C00F6C158 /* AVFoundation.framework */; };
+		C9179585171767FD00F5331C /* UK_Cities.csv in Resources */ = {isa = PBXBuildFile; fileRef = C9179584171767FD00F5331C /* UK_Cities.csv */; };
 		C9298DDB1704E22F007FA465 /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DD41704E22F007FA465 /* Icon-72.png */; };
 		C9298DDC1704E22F007FA465 /* Icon-72@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DD51704E22F007FA465 /* Icon-72@2x.png */; };
 		C9298DDD1704E22F007FA465 /* Icon-Small-50.png in Resources */ = {isa = PBXBuildFile; fileRef = C9298DD61704E22F007FA465 /* Icon-Small-50.png */; };
@@ -40,6 +41,7 @@
 /* Begin PBXFileReference section */
 		C90F307E16B5D10000F6C158 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		C90F308916B5D64C00F6C158 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		C9179584171767FD00F5331C /* UK_Cities.csv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = UK_Cities.csv; sourceTree = "<group>"; };
 		C9298DD41704E22F007FA465 /* Icon-72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72.png"; sourceTree = SOURCE_ROOT; };
 		C9298DD51704E22F007FA465 /* Icon-72@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72@2x.png"; sourceTree = SOURCE_ROOT; };
 		C9298DD61704E22F007FA465 /* Icon-Small-50.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small-50.png"; sourceTree = SOURCE_ROOT; };
@@ -98,6 +100,7 @@
 		C98BD2C316F3D78000EBF095 /* Data Source */ = {
 			isa = PBXGroup;
 			children = (
+				C9179584171767FD00F5331C /* UK_Cities.csv */,
 				C98BD2C416F3D79100EBF095 /* USA_Capitals.csv */,
 			);
 			name = "Data Source";
@@ -243,6 +246,7 @@
 				C9298DDF1704E22F007FA465 /* Icon-Small@2x.png in Resources */,
 				C9298DE01704E22F007FA465 /* Icon.png in Resources */,
 				C9298DE11704E22F007FA465 /* Icon@2x.png in Resources */,
+				C9179585171767FD00F5331C /* UK_Cities.csv in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

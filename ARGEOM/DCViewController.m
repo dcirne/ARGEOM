@@ -117,7 +117,7 @@ typedef void(^PlacemarksLoaded)(NSArray *placemarks);
 - (void)loadPlacemarks:(PlacemarksLoaded)completionBlock {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSBundle *mainBundle = [NSBundle mainBundle];
-        NSURL *placemarksURL = [mainBundle URLForResource:@"USA_Capitals" withExtension:@"csv"];
+        NSURL *placemarksURL = [mainBundle URLForResource:@"UK_Cities" withExtension:@"csv"];
         
         NSError *error = nil;
         NSString *placemarksString = [NSString stringWithContentsOfURL:placemarksURL encoding:NSUTF8StringEncoding error:&error];
