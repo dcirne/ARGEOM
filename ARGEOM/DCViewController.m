@@ -40,11 +40,12 @@ typedef void(^PlacemarksLoaded)(NSArray *placemarks);
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    NSDictionary *bundleInfoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *storyboardName = bundleInfoDictionary[@"UIMainStoryboardFile"];
+    UIStoryboard *storyBoard = [UIStoryboard storyboardWithName:storyboardName bundle:[NSBundle bundleForClass:[self class]]];
+    
 #ifdef USE_EXTERNAL_PLACEMARKS
     [self loadPlacemarks:^(NSArray *placemarks) {
-        NSDictionary *bundleInfoDictionary = [[NSBundle mainBundle] infoDictionary];
-        NSString *storyboardName = bundleInfoDictionary[@"UIMainStoryboardFile"];
-        UIStoryboard *storyBoard = [UIStoryboard storyboardWithName:storyboardName bundle:[NSBundle bundleForClass:[self class]]];
         [self setArController:[storyBoard instantiateViewControllerWithIdentifier:@"DCAugmentedRealityViewController"]];
         
         [self presentViewController:self.arController
@@ -55,9 +56,6 @@ typedef void(^PlacemarksLoaded)(NSArray *placemarks);
     }];
 #else
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSDictionary *bundleInfoDictionary = [[NSBundle mainBundle] infoDictionary];
-        NSString *storyboardName = bundleInfoDictionary[@"UIMainStoryboardFile"];
-        UIStoryboard *storyBoard = [UIStoryboard storyboardWithName:storyboardName bundle:[NSBundle bundleForClass:[self class]]];
         [self setArController:[storyBoard instantiateViewControllerWithIdentifier:@"DCAugmentedRealityViewController"]];
         
         NSArray *placemarks = [self loadPlacemarks];
