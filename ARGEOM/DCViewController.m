@@ -69,6 +69,10 @@ typedef void(^PlacemarksLoaded)(NSArray *placemarks);
 #endif
 }
 
+- (UIRectEdge)edgesForExtendedLayout {
+    return UIRectEdgeNone;
+}
+
 - (NSArray *)loadPlacemarks {
     NSMutableArray *placemarks = [[NSMutableArray alloc] initWithCapacity:5];
     

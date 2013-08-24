@@ -46,6 +46,8 @@ typedef void(^PlacemarksCalculationComplete)(NSArray *visiblePlacemarks, NSArray
 
 static CGSize defaultAugmentedRealityAnnotationSize;
 static double piOver180;
+static double cosCameraAngle;
+static double sinCameraAngle;
 
 @interface DCAugmentedRealityViewController() <MKMapViewDelegate, CLLocationManagerDelegate> {
     IBOutlet MKMapView *stdMapView;
@@ -87,6 +89,8 @@ static double piOver180;
     }
     
     piOver180  = M_PI / 180.0;
+    cosCameraAngle = cos(3.0 / 8.0 * M_PI);
+    sinCameraAngle = sin(3.0 / 8.0 * M_PI);
 }
 
 - (void)awakeFromNib {
@@ -483,10 +487,20 @@ static double piOver180;
 }
 
 - (void)updateMapVisibleRegion {
-    MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(stdMapView.userLocation.location.coordinate, distance, distance);
-    
-    [stdMapView setRegion:[stdMapView regionThatFits:region]
-                 animated:YES];
+    if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1) {
+        MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(stdMapView.userLocation.location.coordinate, distance, distance);
+        
+        [stdMapView setRegion:[stdMapView regionThatFits:region]
+                     animated:YES];
+    } else {
+        MKMapCamera *camera = [MKMapCamera camera];
+        camera.centerCoordinate = stdMapView.userLocation.location.coordinate;
+        camera.heading = self.locationManager.heading.trueHeading;
+        camera.pitch = _visualizationMode == VisualizationModeAugmentedReality ? 45 : 0;
+        camera.altitude = sqrt(2.0 * pow(distanceSlider.value * distance, 2.0)) / (2.0 * cosCameraAngle) * sinCameraAngle;
+        
+        [stdMapView setCamera:camera animated:YES];
+    }
 }
 
 - (IBAction)distanceSliderValueChanged:(UISlider *)sender {
@@ -506,7 +520,9 @@ static double piOver180;
     
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^{
-        [stdMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:NO];
+        if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1) {
+            [stdMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:NO];
+        }
 
         dispatch_async(dispatch_get_main_queue(), ^{
             [self calculateVisiblePlacemarksWithUserLocation:self.locationManager.location heading:self.locationManager.heading completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
@@ -522,7 +538,7 @@ static double piOver180;
 	
     [self.captureSession startRunning];
     
-    stdMapView.showsUserLocation = YES;
+    stdMapView.showsUserLocation = NO;
     [stdMapView setUserTrackingMode:MKUserTrackingModeFollowWithHeading animated:YES];
     
     [self.locationManager startUpdatingLocation];
@@ -670,11 +686,13 @@ static double piOver180;
 }
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
-    if (_visualizationMode != VisualizationModeAugmentedReality) {
-        return;
-    }
-    
     CLLocation *location = [locations lastObject];
+    if (location.horizontalAccuracy < 0 || location.horizontalAccuracy > 1000) {
+        return;
+    } else {
+        [self.locationManager stopUpdatingLocation];
+        stdMapView.showsUserLocation = NO;
+    }
     
     [self calculateVisiblePlacemarksWithUserLocation:location heading:manager.heading completionBlock:^(NSArray *visiblePlacemarks, NSArray *nonVisiblePlacemarks) {
         [self overlayAugmentedRealityPlacemarks:visiblePlacemarks nonVisiblePlacemarks:nonVisiblePlacemarks];
