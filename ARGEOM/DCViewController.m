@@ -31,10 +31,6 @@
 
 typedef void(^PlacemarksLoaded)(NSArray *placemarks);
 
-@interface DCViewController()
-
-@end
-
 @implementation DCViewController
 
 - (void)viewDidLoad {
