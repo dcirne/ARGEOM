@@ -347,6 +347,7 @@
 		C98CDF9F164D697A00395BC4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Dalmo Cirne (7N76EFJ399)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ARGEOM/ARGEOM-Prefix.pch";
 				INFOPLIST_FILE = "ARGEOM/ARGEOM-Info.plist";
@@ -358,6 +359,7 @@
 		C98CDFA0164D697A00395BC4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Dalmo Cirne (2YY5D7NG87)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ARGEOM/ARGEOM-Prefix.pch";
 				INFOPLIST_FILE = "ARGEOM/ARGEOM-Info.plist";
