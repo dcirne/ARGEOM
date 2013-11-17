@@ -347,13 +347,13 @@
 		C98CDF9F164D697A00395BC4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Dalmo Cirne (7N76EFJ399)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ARGEOM/ARGEOM-Prefix.pch";
 				INFOPLIST_FILE = "ARGEOM/ARGEOM-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "F4933335-7009-4C30-BEE9-12ED7DB95E80";
+				PROVISIONING_PROFILE = "6FBD9029-3051-42A6-8B12-E11482AAD9A5";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -361,12 +361,13 @@
 		C98CDFA0164D697A00395BC4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Dalmo Cirne (7N76EFJ399)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ARGEOM/ARGEOM-Prefix.pch";
 				INFOPLIST_FILE = "ARGEOM/ARGEOM-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "6FBD9029-3051-42A6-8B12-E11482AAD9A5";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
